@@ -36,6 +36,7 @@ class _StaticWallpaperPageState extends State<StaticWallpaperPage> {
   List<ImgDetails> staticWallpapersDetails = [];
   Map<int, bool> isDownloading = {};
   int localStaticWallpaperCount = 0;
+  bool isInterstitialLoaded = false;
 
   @override
   void initState() {
@@ -58,6 +59,7 @@ class _StaticWallpaperPageState extends State<StaticWallpaperPage> {
           onAdLoaded: (RewardedAd ad) {
             print('$ad loaded.');
             _rewardedAd = ad;
+            isInterstitialLoaded = true;
             _numRewardedLoadAttempts = 0;
           },
           onAdFailedToLoad: (LoadAdError error) {
@@ -320,41 +322,74 @@ class _StaticWallpaperPageState extends State<StaticWallpaperPage> {
       ]),
     );
   }
-  void _showRewardedAd() {
+  // void _showRewardedAd() {
+  //   if (_rewardedAd == null) {
+  //     print('Warning: attempt to show rewarded before loaded.');
+  //     return;
+  //   }
+  //   _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+  //
+  //     onAdShowedFullScreenContent: (RewardedAd ad) {
+  //       print('ad onAdShowedFullScreenContent.');
+  //       log("1");
+  //     },
+  //
+  //     onAdDismissedFullScreenContent: (RewardedAd ad) {
+  //       print('$ad onAdDismissedFullScreenContent.');
+  //       ad.dispose();
+  //       _createRewardedAd();
+  //       log("2");
+  //     },
+  //
+  //     onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+  //       print('$ad onAdFailedToShowFullScreenContent: $error');
+  //       ad.dispose();
+  //       _createRewardedAd();
+  //       log("3");
+  //     },
+  //
+  //   );
+  //
+  //   _rewardedAd!.setImmersiveMode(true);
+  //   _rewardedAd!.show(
+  //       onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+  //         print('$ad with reward $RewardItem(${reward.amount}, ${reward.type})');
+  //       });
+  //   _rewardedAd = null;
+  // }
+
+  Future<bool> _showRewardedAd() async {
     if (_rewardedAd == null) {
-      print('Warning: attempt to show rewarded before loaded.');
-      return;
+      // print('Warning: attempt to show rewarded before loaded.');
+      return false;
     }
     _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdShowedFullScreenContent: (RewardedAd ad) {
 
-      onAdShowedFullScreenContent: (RewardedAd ad) {
-        print('ad onAdShowedFullScreenContent.');
-        log("1");
-      },
+        },
+        onAdDismissedFullScreenContent: (RewardedAd ad) {
 
-      onAdDismissedFullScreenContent: (RewardedAd ad) {
-        print('$ad onAdDismissedFullScreenContent.');
-        ad.dispose();
-        _createRewardedAd();
-        log("2");
-      },
+          ad.dispose();
+          _createRewardedAd();
 
-      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
-        print('$ad onAdFailedToShowFullScreenContent: $error');
-        ad.dispose();
-        _createRewardedAd();
-        log("3");
-      },
+        },
+        onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
 
-    );
+          ad.dispose();
 
-    _rewardedAd!.setImmersiveMode(true);
-    _rewardedAd!.show(
-        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-          print('$ad with reward $RewardItem(${reward.amount}, ${reward.type})');
+        },
+        onAdImpression: (RewardedAd ad) => {
+
         });
-    _rewardedAd = null;
+
+
+    _rewardedAd!.show(onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+
+    });
+
+    return true;
   }
+
   Future downloadFrame(imageNames, int index) async {
 
     if(index%2==1){
@@ -400,29 +435,54 @@ class _StaticWallpaperPageState extends State<StaticWallpaperPage> {
                           onPressed: () async {
                             Navigator.pop(context);
 
-                            _showRewardedAd();
-                            print(widget.bannerModel.frameLocationName);
-                            print(widget.bannerModel.cloudReferenceName);
-                            String namePrefix =  widget.bannerModel.cloudReferenceName+"%2F"+widget.bannerModel.frameLocationName;
-                            print("Location prefix name = "+namePrefix);
-                            setState(() {isDownloading[index] = true;});
-                            final dir = await getApplicationDocumentsDirectory();
-                            final file = File('${dir.path}/$namePrefix%2F${imageNames}');
 
-                            await FirebaseStorage.instance
-                                .ref('${widget.bannerModel.cloudReferenceName}/${widget.bannerModel.frameLocationName}')
-                                .child(imageNames)
-                                .writeToFile(file);
+                            if(isInterstitialLoaded == true){
+                              if (await _showRewardedAd()){
+                                log("INSIDE IF CONDITION");
+                                print(widget.bannerModel.frameLocationName);
+                                print(widget.bannerModel.cloudReferenceName);
+                                String namePrefix =  widget.bannerModel.cloudReferenceName+"%2F"+widget.bannerModel.frameLocationName;
+                                print("Location prefix name = "+namePrefix);
+                                setState(() {isDownloading[index] = true;});
+                                final dir = await getApplicationDocumentsDirectory();
+                                final file = File('${dir.path}/$namePrefix%2F${imageNames}');
 
-                            staticWallpapersDetails.removeAt(index);
-                            staticWallpapersDetails.insert(index,
-                                ImgDetails(path: file.path, category: "local", frameName: imageNames));
+                                await FirebaseStorage.instance
+                                    .ref('${widget.bannerModel.cloudReferenceName}/${widget.bannerModel.frameLocationName}')
+                                    .child(imageNames)
+                                    .writeToFile(file);
 
-                            setState(() {isDownloading[index] = false;});
+                                staticWallpapersDetails.removeAt(index);
+                                staticWallpapersDetails.insert(index,
+                                    ImgDetails(path: file.path, category: "local", frameName: imageNames));
+                                isInterstitialLoaded = false;
+                                setState(() {isDownloading[index] = false;});
+                              }
+                            }
+                            else{
+
+                              log("INSIDE ELSE CONDITION");
+                              String namePrefix =  widget.bannerModel.cloudReferenceName+"%2F"+widget.bannerModel.frameLocationName;
+                              setState(() {isDownloading[index] = true;});
+                              final dir = await getApplicationDocumentsDirectory();
+                              final file = File('${dir.path}/$namePrefix%2F${imageNames}');
+                              await FirebaseStorage.instance
+                                  .ref('${widget.bannerModel.cloudReferenceName}/${widget.bannerModel.frameLocationName}')
+                                  .child(imageNames)
+                                  .writeToFile(file);
+                              staticWallpapersDetails.removeAt(index);
+                              staticWallpapersDetails.insert(index,
+                                  ImgDetails(path: file.path, category: "local", frameName: imageNames));
+                              setState(() {isDownloading[index] = false;});
+                            }
 
                             },
-                          child: Text(
-                            "Watch Ad",),
+                          child:
+                          isInterstitialLoaded == true
+                              ?  Text(
+                            "Watch Ad",)
+                              : const Text(
+                            "Download Frame",),
 
                           // Text("Watch Ad")
 

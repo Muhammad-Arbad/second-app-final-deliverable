@@ -19,8 +19,11 @@ class SingleCategoryFrames extends StatelessWidget {
     return OurScaffold(
         appBarTitle: bannerModel.bannerName,
         scaffoldBody:bannerModel.bannerName == "Pip Photo"?
-        PipItemsGridView(
-          bannerModel: bannerModel,
+        Padding(
+          padding: const EdgeInsets.only(bottom: 60),
+          child: PipItemsGridView(
+            bannerModel: bannerModel,
+          ),
         ):
         Padding(
           padding: const EdgeInsets.only(bottom: 60),

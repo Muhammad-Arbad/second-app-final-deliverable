@@ -61,23 +61,45 @@ class _ItemsGridViewState extends State<ItemsGridView> {
     loadFramesFromAssets();
   }
 
-  void loadAds() async {
-    // _createInterstitialAd();
-    // await _createRewardedAd();
-  }
+
+
+  // void _createInterstitialAd() {
+  //   log("INSIDE CREATE REWARDED AD");
+  //   InterstitialAd.load(
+  //       adUnitId: AdMobService.interstitialAdUnitId,
+  //       request: const AdRequest(),
+  //       adLoadCallback: InterstitialAdLoadCallback(
+  //           onAdLoaded: (ad) {
+  //             isInterstitialLoaded = true;
+  //             print("Ad Loaded");
+  //
+  //             interstitialAd = ad;
+  //           },
+  //           onAdFailedToLoad: (LoadAdError error) => interstitialAd = null));
+  // }
 
   void _createInterstitialAd() {
-    InterstitialAd.load(
+    RewardedAd.load(
+      // adUnitId: AdMobService.rewardedAdUnitId,
         adUnitId: AdMobService.interstitialAdUnitId,
-        request: const AdRequest(),
-        adLoadCallback: InterstitialAdLoadCallback(
-            onAdLoaded: (ad) {
-              isInterstitialLoaded = true;
-              print("Ad Loaded");
 
-              interstitialAd = ad;
-            },
-            onAdFailedToLoad: (LoadAdError error) => interstitialAd = null));
+        request: AdRequest(),
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
+          onAdLoaded: (RewardedAd ad) {
+            print('$ad loaded.');
+            rewardedAd = ad;
+            isInterstitialLoaded = true;
+            _numRewardedLoadAttempts = 0;
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            print('RewardedAd failed to load: $error');
+            rewardedAd = null;
+            _numRewardedLoadAttempts += 1;
+            if (_numRewardedLoadAttempts < maxFailedLoadAttempts) {
+              _createInterstitialAd();
+            }
+          },
+        ));
   }
 
   void showInterstitialAd() {
@@ -386,6 +408,43 @@ class _ItemsGridViewState extends State<ItemsGridView> {
     });
   }
 
+
+  Future<bool> _showRewardedAd() async {
+    log("INSIDE SHOW REWARDED AD FUNCTION");
+    if (rewardedAd == null) {
+      // print('Warning: attempt to show rewarded before loaded.');
+      log("INSIDE IF");
+      return false;
+    }
+    rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdShowedFullScreenContent: (RewardedAd ad) {
+
+        },
+        onAdDismissedFullScreenContent: (RewardedAd ad) {
+
+          ad.dispose();
+          _createInterstitialAd();
+
+        },
+        onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+
+          ad.dispose();
+
+        },
+        onAdImpression: (RewardedAd ad) => {
+
+        });
+
+
+    rewardedAd!.show(onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+
+    });
+
+    log("BEFORE RETURN");
+    return true;
+  }
+
+
   Future downloadFrame(imageNames, int index) async {
     if (index % 2 == 1) {
       print("It is Locked Frame: $index");
@@ -434,49 +493,50 @@ class _ItemsGridViewState extends State<ItemsGridView> {
 
 
                               if (isInterstitialLoaded == true) {
-                                interstitialAd!.fullScreenContentCallback =
-                                    FullScreenContentCallback(
-                                        onAdShowedFullScreenContent:
-                                            (InterstitialAd ad) => print(
-                                            '%ad onAdShowedFullScreenContent.'),
-                                        onAdDismissedFullScreenContent:
-                                            (InterstitialAd ad) async {
-                                          print('$ad Ad has been Dismissed');
-                                          print("INDEX VALUE :: $index");
-                                          downloadSingleFrame(
-                                              index, imageNames);
-                                          print(
-                                              '$ad onAdDismissedFullScreenContent.');
-                                          _createInterstitialAd();
-                                          Navigator.pop(context);
 
-                                          ad.dispose();
-                                        },
-                                        onAdFailedToShowFullScreenContent:
-                                            (InterstitialAd ad,
-                                            AdError error) {
-                                          print(
-                                              '$ad onAdFailedToShowFullScreenContent: $error');
-                                          ad.dispose();
-                                        },
-                                        onAdImpression: (InterstitialAd ad) {
-                                          isInterstitialLoaded = false;
-                                          _createInterstitialAd();
-                                          Navigator.pop(context);
-                                          setState(() {});
-                                        });
+                                if(await _showRewardedAd()){
+                                  downloadSingleFrame(index, imageNames);
+                                }
 
-                                interstitialAd!.show();
+                                // interstitialAd!.fullScreenContentCallback =
+                                //     FullScreenContentCallback(
+                                //         onAdShowedFullScreenContent:
+                                //             (InterstitialAd ad) => print(
+                                //             '%ad onAdShowedFullScreenContent.'),
+                                //         onAdDismissedFullScreenContent:
+                                //             (InterstitialAd ad) async {
+                                //           print('$ad Ad has been Dismissed');
+                                //           print("INDEX VALUE :: $index");
+                                //           downloadSingleFrame(
+                                //               index, imageNames);
+                                //           print(
+                                //               '$ad onAdDismissedFullScreenContent.');
+                                //           _createInterstitialAd();
+                                //           Navigator.pop(context);
+                                //
+                                //           ad.dispose();
+                                //         },
+                                //         onAdFailedToShowFullScreenContent:
+                                //             (InterstitialAd ad,
+                                //             AdError error) {
+                                //           print(
+                                //               '$ad onAdFailedToShowFullScreenContent: $error');
+                                //           ad.dispose();
+                                //         },
+                                //         onAdImpression: (InterstitialAd ad) {
+                                //           isInterstitialLoaded = false;
+                                //           _createInterstitialAd();
+                                //           Navigator.pop(context);
+                                //           setState(() {});
+                                //         });
+                                //
+                                // interstitialAd!.show();
+
+
                               } else {
                                 downloadSingleFrame(index, imageNames);
                               }
 
-
-                              // if (await _showRewardedAd()) {
-                              //   downloadSingleFrame(index, imageNames);
-                              // } else {
-                              //   // widget.changeFrame(await downloadSingleFrame(index,frameDetail.frameName));
-                              // }
                             },
                             child:
                             isInterstitialLoaded == true

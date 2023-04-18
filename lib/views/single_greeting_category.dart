@@ -19,8 +19,11 @@ class SingleCategoryGreetings extends StatelessWidget {
   Widget build(BuildContext context) {
     return OurScaffold(
         appBarTitle: bannerModel.bannerName,
-        scaffoldBody: BgChangeItemsGridView(
-          bannerModel: bannerModel,
+        scaffoldBody: Padding(
+          padding: const EdgeInsets.only(bottom: 60),
+          child: BgChangeItemsGridView(
+            bannerModel: bannerModel,
+          ),
         ),
       bottomSheet: AdCreation().showBannerAd(bannerAd),
     );

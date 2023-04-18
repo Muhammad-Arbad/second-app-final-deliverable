@@ -40,6 +40,7 @@ class _PipItemsGridViewState extends State<PipItemsGridView> {
   late bool isConnected;
   bool isInterstitialLoaded = false;
   InterstitialAd? interstitialAd;
+  RewardedAd? rewardedAd;
   // Map _source = {ConnectivityResult.none: false};
   // final NetworkConnectivity _networkConnectivity = NetworkConnectivity.instance;
 
@@ -82,35 +83,59 @@ class _PipItemsGridViewState extends State<PipItemsGridView> {
   }
 
   void _createInterstitialAd() {
-    InterstitialAd.load(
+    log("INSIDE CREATE INTESTIAL AD");
+    RewardedAd.load(
+      // adUnitId: AdMobService.rewardedAdUnitId,
         adUnitId: AdMobService.interstitialAdUnitId,
-        request: const AdRequest(),
-        adLoadCallback: InterstitialAdLoadCallback(
-            onAdLoaded: (ad) {
-              isInterstitialLoaded = true;
-              print("Ad Loaded");
 
-              interstitialAd = ad;
-            },
-            onAdFailedToLoad: (LoadAdError error) => interstitialAd = null));
+        request: AdRequest(),
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
+          onAdLoaded: (RewardedAd ad) {
+            print('$ad loaded.');
+            rewardedAd = ad;
+            isInterstitialLoaded = true;
+            _numRewardedLoadAttempts = 0;
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            print('RewardedAd failed to load: $error');
+            rewardedAd = null;
+            _numRewardedLoadAttempts += 1;
+            if (_numRewardedLoadAttempts < maxFailedLoadAttempts) {
+              _createInterstitialAd();
+            }
+          },
+        ));
   }
+  // void _createInterstitialAd() {
+  //   InterstitialAd.load(
+  //       adUnitId: AdMobService.interstitialAdUnitId,
+  //       request: const AdRequest(),
+  //       adLoadCallback: InterstitialAdLoadCallback(
+  //           onAdLoaded: (ad) {
+  //             isInterstitialLoaded = true;
+  //             print("Ad Loaded");
+  //
+  //             interstitialAd = ad;
+  //           },
+  //           onAdFailedToLoad: (LoadAdError error) => interstitialAd = null));
+  // }
 
-  void showInterstitialAd() {
-    interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (InterstitialAd ad) =>
-          print('%ad onAdShowedFullScreenContent.'),
-      onAdDismissedFullScreenContent: (InterstitialAd ad) {
-        print('$ad onAdDismissedFullScreenContent.');
-        ad.dispose();
-      },
-      onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
-        print('$ad onAdFailedToShowFullScreenContent: $error');
-        ad.dispose();
-      },
-      onAdImpression: (InterstitialAd ad) => print('$ad impression occurred.'),
-    );
-    interstitialAd!.show();
-  }
+  // void showInterstitialAd() {
+  //   interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+  //     onAdShowedFullScreenContent: (InterstitialAd ad) =>
+  //         print('%ad onAdShowedFullScreenContent.'),
+  //     onAdDismissedFullScreenContent: (InterstitialAd ad) {
+  //       print('$ad onAdDismissedFullScreenContent.');
+  //       ad.dispose();
+  //     },
+  //     onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+  //       print('$ad onAdFailedToShowFullScreenContent: $error');
+  //       ad.dispose();
+  //     },
+  //     onAdImpression: (InterstitialAd ad) => print('$ad impression occurred.'),
+  //   );
+  //   interstitialAd!.show();
+  // }
 
   // void _createRewardedAd() {
   //   RewardedAd.load(
@@ -385,39 +410,73 @@ class _PipItemsGridViewState extends State<PipItemsGridView> {
   }
 
 
-
-  Future<void> _showRewardedAd() async {
-    if (_rewardedAd == null) {
-      print('Warning: attempt to show rewarded before loaded.');
-      return;
+  Future<bool> _showRewardedAd() async {
+    log("INSIDE SHOW REWARDED AD FUNCTION");
+    if (rewardedAd == null) {
+      // print('Warning: attempt to show rewarded before loaded.');
+      log("INSIDE IF");
+      return false;
     }
-    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (RewardedAd ad) {
-        print('ad onAdShowedFullScreenContent.');
-        log("1");
-      },
-      onAdDismissedFullScreenContent: (RewardedAd ad) {
-        print('$ad onAdDismissedFullScreenContent.');
-        ad.dispose();
-        // _createRewardedAd();
-        log("2");
-      },
-      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
-        print('$ad onAdFailedToShowFullScreenContent: $error');
-        ad.dispose();
-        // _createRewardedAd();
-        log("3");
-      },
-      onAdImpression: (RewardedAd ad) => print('$ad impression occurred.'),
-    );
+    rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdShowedFullScreenContent: (RewardedAd ad) {
 
-    // _rewardedAd!.setImmersiveMode(true);
-    _rewardedAd!.show(
-        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-      print("Inside Show Functions");
-      print('$ad with reward $RewardItem(${reward.amount}, ${reward.type})');
+        },
+        onAdDismissedFullScreenContent: (RewardedAd ad) {
+
+          ad.dispose();
+          _createInterstitialAd();
+
+        },
+        onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+
+          ad.dispose();
+
+        },
+        onAdImpression: (RewardedAd ad) => {
+
+        });
+
+
+    rewardedAd!.show(onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+
     });
+
+    log("BEFORE RETURN");
+    return true;
   }
+
+  // Future<void> _showRewardedAd() async {
+  //   if (_rewardedAd == null) {
+  //     print('Warning: attempt to show rewarded before loaded.');
+  //     return;
+  //   }
+  //   _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+  //     onAdShowedFullScreenContent: (RewardedAd ad) {
+  //       print('ad onAdShowedFullScreenContent.');
+  //       log("1");
+  //     },
+  //     onAdDismissedFullScreenContent: (RewardedAd ad) {
+  //       print('$ad onAdDismissedFullScreenContent.');
+  //       ad.dispose();
+  //       // _createRewardedAd();
+  //       log("2");
+  //     },
+  //     onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+  //       print('$ad onAdFailedToShowFullScreenContent: $error');
+  //       ad.dispose();
+  //       // _createRewardedAd();
+  //       log("3");
+  //     },
+  //     onAdImpression: (RewardedAd ad) => print('$ad impression occurred.'),
+  //   );
+  //
+  //   // _rewardedAd!.setImmersiveMode(true);
+  //   _rewardedAd!.show(
+  //       onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+  //     print("Inside Show Functions");
+  //     print('$ad with reward $RewardItem(${reward.amount}, ${reward.type})');
+  //   });
+  // }
 
   Future downloadFrame(imageNames, int index) async {
 
@@ -467,39 +526,45 @@ class _PipItemsGridViewState extends State<PipItemsGridView> {
 
 
                             if (isInterstitialLoaded == true) {
-                              interstitialAd!.fullScreenContentCallback =
-                                  FullScreenContentCallback(
-                                      onAdShowedFullScreenContent:
-                                          (InterstitialAd ad) => print(
-                                          '%ad onAdShowedFullScreenContent.'),
-                                      onAdDismissedFullScreenContent:
-                                          (InterstitialAd ad) async {
-                                        print('$ad Ad has been Dismissed');
-                                        print("INDEX VALUE :: $index");
-                                        downloadSingleFrame(
-                                            index, imageNames);
-                                        print(
-                                            '$ad onAdDismissedFullScreenContent.');
-                                        _createInterstitialAd();
-                                        Navigator.pop(context);
+                              if(await _showRewardedAd()){
+                                          downloadSingleFrame(index, imageNames);
+                              }
 
-                                        ad.dispose();
-                                      },
-                                      onAdFailedToShowFullScreenContent:
-                                          (InterstitialAd ad,
-                                          AdError error) {
-                                        print(
-                                            '$ad onAdFailedToShowFullScreenContent: $error');
-                                        ad.dispose();
-                                      },
-                                      onAdImpression: (InterstitialAd ad) {
-                                        isInterstitialLoaded = false;
-                                        _createInterstitialAd();
-                                        Navigator.pop(context);
-                                        setState(() {});
-                                      });
 
-                              interstitialAd!.show();
+
+                              // interstitialAd!.fullScreenContentCallback =
+                              //     FullScreenContentCallback(
+                              //         onAdShowedFullScreenContent:
+                              //             (InterstitialAd ad) => print(
+                              //             '%ad onAdShowedFullScreenContent.'),
+                              //         onAdDismissedFullScreenContent:
+                              //             (InterstitialAd ad) async {
+                              //           print('$ad Ad has been Dismissed');
+                              //           print("INDEX VALUE :: $index");
+                              //           downloadSingleFrame(
+                              //               index, imageNames);
+                              //           print(
+                              //               '$ad onAdDismissedFullScreenContent.');
+                              //           _createInterstitialAd();
+                              //           Navigator.pop(context);
+                              //
+                              //           ad.dispose();
+                              //         },
+                              //         onAdFailedToShowFullScreenContent:
+                              //             (InterstitialAd ad,
+                              //             AdError error) {
+                              //           print(
+                              //               '$ad onAdFailedToShowFullScreenContent: $error');
+                              //           ad.dispose();
+                              //         },
+                              //         onAdImpression: (InterstitialAd ad) {
+                              //           isInterstitialLoaded = false;
+                              //           _createInterstitialAd();
+                              //           Navigator.pop(context);
+                              //           setState(() {});
+                              //         });
+                              //
+                              // interstitialAd!.show();
                             } else {
                               downloadSingleFrame(index, imageNames);
                             }
@@ -586,291 +651,6 @@ class _PipItemsGridViewState extends State<PipItemsGridView> {
           });
 
     }
-
-
-
-
-
-    // if (index % 2 == 1) {
-    //   // await _createRewardedAd();
-    //
-    //   print("It is Locked Frame: $index");
-    //
-    //   if (isInterstitialLoaded == true) {
-    //     showModalBottomSheet(
-    //         context: context,
-    //         builder: (context) {
-    //           return StatefulBuilder(
-    //               builder: ((BuildContext context, StateSetter setState) {
-    //                 return Container(
-    //                   height: 310,
-    //                   child: Container(
-    //                     padding: EdgeInsets.only(top: 20),
-    //                     width: MediaQuery.of(context).size.width * 0.90,
-    //                     child: Column(
-    //                       children: [
-    //                         const Text(
-    //                           "Choose Your Option",
-    //                           style: TextStyle(
-    //                               fontWeight: FontWeight.bold, fontSize: 24),
-    //                         ),
-    //                         const SizedBox(
-    //                           height: 20,
-    //                         ),
-    //                         Row(
-    //                           crossAxisAlignment: CrossAxisAlignment.start,
-    //                           mainAxisAlignment: MainAxisAlignment.spaceAround,
-    //                           children: [
-    //                             InkWell(
-    //                               onTap: () {
-    //                                 Navigator.pop(context);
-    //                               },
-    //                               child: Container(
-    //                                 decoration: BoxDecoration(
-    //                                     color: Colors.blue,
-    //                                     borderRadius: BorderRadius.circular(6)),
-    //                                 width: MediaQuery.of(context).size.width * .39,
-    //                                 height:
-    //                                 MediaQuery.of(context).size.height * .21,
-    //                                 child: Column(
-    //                                   mainAxisAlignment: MainAxisAlignment.center,
-    //                                   children: <Widget>[
-    //                                     Container(
-    //                                       width: MediaQuery.of(context).size.width *
-    //                                           .85,
-    //                                       child: const Icon(
-    //                                         Icons.close,
-    //                                         color: Colors.white,
-    //                                         size: 110,
-    //                                       ),
-    //                                     ),
-    //                                     const Text(
-    //                                       "May be Later",
-    //                                       style: TextStyle(
-    //                                           fontWeight: FontWeight.bold,
-    //                                           color: Colors.white,
-    //                                           fontSize: 18),
-    //                                     ),
-    //                                   ],
-    //                                 ),
-    //                               ),
-    //                             ),
-    //                             InkWell(
-    //                               onTap: () async {
-    //                                 if (isInterstitialLoaded == true) {
-    //                                   interstitialAd!.fullScreenContentCallback =
-    //                                       FullScreenContentCallback(
-    //                                           onAdShowedFullScreenContent:
-    //                                               (InterstitialAd ad) => print(
-    //                                               '%ad onAdShowedFullScreenContent.'),
-    //                                           onAdDismissedFullScreenContent:
-    //                                               (InterstitialAd ad) async {
-    //                                             print('$ad Ad has been Dismissed');
-    //                                             print("INDEX VALUE :: $index");
-    //                                             downloadSingleFrame(
-    //                                                 index, imageNames);
-    //                                             print(
-    //                                                 '$ad onAdDismissedFullScreenContent.');
-    //                                             _createInterstitialAd();
-    //                                             Navigator.pop(context);
-    //
-    //                                             ad.dispose();
-    //                                           },
-    //                                           onAdFailedToShowFullScreenContent:
-    //                                               (InterstitialAd ad,
-    //                                               AdError error) {
-    //                                             print(
-    //                                                 '$ad onAdFailedToShowFullScreenContent: $error');
-    //                                             ad.dispose();
-    //                                           },
-    //                                           onAdImpression: (InterstitialAd ad) {
-    //                                             isInterstitialLoaded = false;
-    //                                             _createInterstitialAd();
-    //                                             Navigator.pop(context);
-    //                                             setState(() {});
-    //                                           });
-    //
-    //                                   interstitialAd!.show();
-    //                                 } else {
-    //                                   downloadSingleFrame(index, imageNames);
-    //                                 }
-    //
-    //                                 //Navigator.pop(context);
-    //                               },
-    //                               child: Container(
-    //                                 decoration: BoxDecoration(
-    //                                     color: Colors.blue,
-    //                                     borderRadius: BorderRadius.circular(6)),
-    //                                 width: MediaQuery.of(context).size.width * .39,
-    //                                 height:
-    //                                 MediaQuery.of(context).size.height * .21,
-    //                                 child: Column(
-    //                                   mainAxisAlignment: MainAxisAlignment.center,
-    //                                   children: <Widget>[
-    //                                     Container(
-    //                                       width: MediaQuery.of(context).size.width *
-    //                                           .85,
-    //                                       child: Icon(
-    //                                         isInterstitialLoaded == true
-    //                                             ? FontAwesomeIcons.award
-    //                                             : Icons.download,
-    //                                         color: Colors.white,
-    //                                         size: 110,
-    //                                       ),
-    //                                     ),
-    //                                     const SizedBox(
-    //                                       height: 10,
-    //                                     ),
-    //                                     Flexible(
-    //                                       child: isInterstitialLoaded == true
-    //                                           ? const Text(
-    //                                         "Watch Ad",
-    //                                         style: TextStyle(
-    //                                             fontWeight: FontWeight.bold,
-    //                                             color: Colors.white,
-    //                                             fontSize: 18),
-    //                                       )
-    //                                           : const Text(
-    //                                         "Download Frame",
-    //                                         style: TextStyle(
-    //                                             fontWeight: FontWeight.bold,
-    //                                             color: Colors.white,
-    //                                             fontSize: 18),
-    //                                       ),
-    //                                     ),
-    //                                   ],
-    //                                 ),
-    //                               ),
-    //                             ),
-    //                           ],
-    //                         ),
-    //                       ],
-    //                     ),
-    //                   ),
-    //                 );
-    //               }));
-    //         });
-    //
-    //
-    //
-    // }
-    // }
-    // else {
-    //   // String namePrefix = widget.bannerModel.cloudReferenceName + "%2F" +
-    //   //     widget.bannerModel.frameLocationName;
-    //
-    //
-    //   showModalBottomSheet(
-    //       context: context,
-    //       builder: (context) {
-    //         return StatefulBuilder(builder: ((context, setState) {
-    //           return Container(
-    //             height: 310,
-    //             child: Container(
-    //               padding: EdgeInsets.only(top: 20),
-    //               width: MediaQuery.of(context).size.width * 0.90,
-    //               child: Column(
-    //                 children: [
-    //                   const Text(
-    //                     "Choose Your Option",
-    //                     style: TextStyle(
-    //                         fontWeight: FontWeight.bold, fontSize: 24),
-    //                   ),
-    //                   const SizedBox(
-    //                     height: 20,
-    //                   ),
-    //                   Row(
-    //                     crossAxisAlignment: CrossAxisAlignment.start,
-    //                     mainAxisAlignment: MainAxisAlignment.spaceAround,
-    //                     children: [
-    //                       InkWell(
-    //                         onTap: () {
-    //                           Navigator.pop(context);
-    //                         },
-    //                         child: Container(
-    //                           decoration: BoxDecoration(
-    //                               color: Colors.blue,
-    //                               borderRadius: BorderRadius.circular(6)),
-    //                           width: MediaQuery.of(context).size.width * .39,
-    //                           height:
-    //                           MediaQuery.of(context).size.height * .21,
-    //                           child: Column(
-    //                             mainAxisAlignment: MainAxisAlignment.center,
-    //                             children: <Widget>[
-    //                               Container(
-    //                                 width: MediaQuery.of(context).size.width *
-    //                                     .85,
-    //                                 child: const Icon(
-    //                                   Icons.close,
-    //                                   color: Colors.white,
-    //                                   size: 110,
-    //                                 ),
-    //                               ),
-    //                               const Text(
-    //                                 "May be Later",
-    //                                 style: TextStyle(
-    //                                     fontWeight: FontWeight.bold,
-    //                                     color: Colors.white,
-    //                                     fontSize: 18),
-    //                               ),
-    //                             ],
-    //                           ),
-    //                         ),
-    //                       ),
-    //                       InkWell(
-    //                         onTap: () async {
-    //                           //Navigator.pop(context);
-    //                           print("DOWNLOAD");
-    //                           print("INDEX VALUE :: $index");
-    //                           downloadSingleFrame(index, imageNames);
-    //                           Navigator.pop(context);
-    //                           // Navigator.pop(context);
-    //                         },
-    //                         child: Container(
-    //                           decoration: BoxDecoration(
-    //                               color: Colors.blue,
-    //                               borderRadius: BorderRadius.circular(6)),
-    //                           width: MediaQuery.of(context).size.width * .39,
-    //                           height:
-    //                           MediaQuery.of(context).size.height * .21,
-    //                           child: Column(
-    //                             mainAxisAlignment: MainAxisAlignment.center,
-    //                             children: <Widget>[
-    //                               Container(
-    //                                 width: MediaQuery.of(context).size.width *
-    //                                     .85,
-    //                                 child: const Icon(
-    //                                   Icons.download,
-    //                                   color: Colors.white,
-    //                                   size: 110,
-    //                                 ),
-    //                               ),
-    //                               const SizedBox(
-    //                                 height: 10,
-    //                               ),
-    //                               const Flexible(
-    //                                 child: Text(
-    //                                   "Download Frame",
-    //                                   style: TextStyle(
-    //                                       fontWeight: FontWeight.bold,
-    //                                       color: Colors.white,
-    //                                       fontSize: 18),
-    //                                 ),
-    //                               ),
-    //                             ],
-    //                           ),
-    //                         ),
-    //                       ),
-    //                     ],
-    //                   ),
-    //                 ],
-    //               ),
-    //             ),
-    //           );
-    //         }));
-    //       });
-    //
-    // }
   }
 
 

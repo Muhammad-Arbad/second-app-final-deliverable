@@ -36,6 +36,7 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
   int localFramesCount = 0;
   bool isInterstitialLoaded = false;
   InterstitialAd? interstitialAd;
+  RewardedAd? rewardedAd;
 
 
 
@@ -44,7 +45,6 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
     // TODO: implement initState
     super.initState();
     _createInterstitialAd();
-    // _createRewardedAd();
     listOfFramesFromClod = FirebaseStorage.instance
         .ref('${widget.bannerModel.cloudReferenceName}/${widget.bannerModel.frameLocationName}')
         .list();
@@ -52,20 +52,42 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
   }
 
 
-
   void _createInterstitialAd() {
-    InterstitialAd.load(
+    log("INSIDE CREATE INTESTIAL AD");
+    RewardedAd.load(
+      // adUnitId: AdMobService.rewardedAdUnitId,
         adUnitId: AdMobService.interstitialAdUnitId,
-        request: const AdRequest(),
-        adLoadCallback: InterstitialAdLoadCallback(
-            onAdLoaded: (ad) {
-              isInterstitialLoaded = true;
-              print("Ad Loaded");
-
-              interstitialAd = ad;
-            },
-            onAdFailedToLoad: (LoadAdError error) => interstitialAd = null));
+        request: AdRequest(),
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
+          onAdLoaded: (RewardedAd ad) {
+            print('$ad loaded.');
+            rewardedAd = ad;
+            isInterstitialLoaded = true;
+            _numRewardedLoadAttempts = 0;
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            print('RewardedAd failed to load: $error');
+            rewardedAd = null;
+            _numRewardedLoadAttempts += 1;
+            if (_numRewardedLoadAttempts < maxFailedLoadAttempts) {
+              _createInterstitialAd();
+            }
+          },
+        ));
   }
+  // void _createInterstitialAd() {
+  //   InterstitialAd.load(
+  //       adUnitId: AdMobService.interstitialAdUnitId,
+  //       request: const AdRequest(),
+  //       adLoadCallback: InterstitialAdLoadCallback(
+  //           onAdLoaded: (ad) {
+  //             isInterstitialLoaded = true;
+  //             print("Ad Loaded");
+  //
+  //             interstitialAd = ad;
+  //           },
+  //           onAdFailedToLoad: (LoadAdError error) => interstitialAd = null));
+  // }
 
   void showInterstitialAd() {
     interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
@@ -82,6 +104,32 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
       onAdImpression: (InterstitialAd ad) => print('$ad impression occurred.'),
     );
     interstitialAd!.show();
+  }
+
+  Future<bool> _showRewardedAd() async {
+
+    if (rewardedAd == null) {
+      return false;
+    }
+    rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdShowedFullScreenContent: (RewardedAd ad) {
+        },
+        onAdDismissedFullScreenContent: (RewardedAd ad) {
+          ad.dispose();
+          _createInterstitialAd();
+        },
+        onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+
+          ad.dispose();
+
+        },
+        onAdImpression: (RewardedAd ad) => {
+
+        });
+    rewardedAd!.show(onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+    });
+
+    return true;
   }
 
   void _createRewardedAd() {
@@ -271,27 +319,22 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
           onTap: () {
             downloadFrame(frameDetail.frameName, index);
           },
-          child: CachedNetworkImage(
-            imageUrl: frameDetail.path,
-            progressIndicatorBuilder: (context, url, downloadProgress) =>
-                Center(child: CircularProgressIndicator(color: Colors.orange,value: downloadProgress.progress)),
-            imageBuilder: (context, imageProvider) => Ink(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  bottomLeft: index % 2 == 1
-                      ? Radius.circular(6)
-                      : Radius.circular(6),
-                  bottomRight: index % 2 == 0
-                      ? Radius.circular(6)
-                      : Radius.circular(6),
-                  topLeft: Radius.circular(6),
-                  topRight: Radius.circular(6),
-                ),
-                image: DecorationImage(
-                  // image: NetworkImage(frameDetail.path),
-                  image: imageProvider,
-                  fit: BoxFit.cover,
-                ),
+          child:
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.only(
+                bottomLeft: index % 2 == 1
+                    ? Radius.circular(6)
+                    : Radius.circular(6),
+                bottomRight: index % 2 == 0
+                    ? Radius.circular(6)
+                    : Radius.circular(6),
+                topLeft: Radius.circular(6),
+                topRight: Radius.circular(6),
+              ),
+              image: DecorationImage(
+                image:NetworkImage(frameDetail.path),
+                fit: BoxFit.cover,
               ),
             ),
           ),
@@ -325,328 +368,141 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
       ]),
     );
   }
-  void _showRewardedAd() {
-    if (_rewardedAd == null) {
-      print('Warning: attempt to show rewarded before loaded.');
-      return;
-    }
-    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
 
-      onAdShowedFullScreenContent: (RewardedAd ad) {
-        print('ad onAdShowedFullScreenContent.');
-        log("1");
-      },
 
-      onAdDismissedFullScreenContent: (RewardedAd ad) {
-        print('$ad onAdDismissedFullScreenContent.');
-        ad.dispose();
-        _createRewardedAd();
-        log("2");
-      },
-
-      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
-        print('$ad onAdFailedToShowFullScreenContent: $error');
-        ad.dispose();
-        _createRewardedAd();
-        log("3");
-      },
-
-    );
-
-    _rewardedAd!.setImmersiveMode(true);
-    _rewardedAd!.show(
-        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-          print('$ad with reward $RewardItem(${reward.amount}, ${reward.type})');
-        });
-    _rewardedAd = null;
-  }
   Future downloadFrame(imageNames, int index) async {
 
-    if(index%2==1){
-      // _showRewardedAd();
-
-
+    if (index % 2 == 1) {
       print("It is Locked Frame: $index");
-
-      if (isInterstitialLoaded == true) {
-        showModalBottomSheet(
-            context: context,
-            builder: (context) {
-              return StatefulBuilder(
-                  builder: ((BuildContext context, StateSetter setState) {
-                    return Container(
-                      height: 310,
-                      child: Container(
-                        padding: EdgeInsets.only(top: 20),
-                        width: MediaQuery.of(context).size.width * 0.90,
-                        child: Column(
-                          children: [
-                            const Text(
-                              "Choose Your Option",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 24),
-                            ),
-                            const SizedBox(
-                              height: 20,
-                            ),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                InkWell(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                        color: Colors.blue,
-                                        borderRadius: BorderRadius.circular(6)),
-                                    width: MediaQuery.of(context).size.width * .39,
-                                    height:
-                                    MediaQuery.of(context).size.height * .21,
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: <Widget>[
-                                        Container(
-                                          width: MediaQuery.of(context).size.width *
-                                              .85,
-                                          child: const Icon(
-                                            Icons.close,
-                                            color: Colors.white,
-                                            size: 110,
-                                          ),
-                                        ),
-                                        const Text(
-                                          "May be Later",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                              fontSize: 18),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                InkWell(
-                                  onTap: () async {
-                                    if (isInterstitialLoaded == true) {
-                                      interstitialAd!.fullScreenContentCallback =
-                                          FullScreenContentCallback(
-                                              onAdShowedFullScreenContent:
-                                                  (InterstitialAd ad) => print(
-                                                  '%ad onAdShowedFullScreenContent.'),
-                                              onAdDismissedFullScreenContent:
-                                                  (InterstitialAd ad) async {
-                                                print('$ad Ad has been Dismissed');
-                                                print("INDEX VALUE :: $index");
-                                                downloadSingleFrame(
-                                                    index, imageNames);
-                                                print(
-                                                    '$ad onAdDismissedFullScreenContent.');
-                                                _createInterstitialAd();
-                                                Navigator.pop(context);
-
-                                                ad.dispose();
-                                              },
-                                              onAdFailedToShowFullScreenContent:
-                                                  (InterstitialAd ad,
-                                                  AdError error) {
-                                                print(
-                                                    '$ad onAdFailedToShowFullScreenContent: $error');
-                                                ad.dispose();
-                                              },
-                                              onAdImpression: (InterstitialAd ad) {
-                                                isInterstitialLoaded = false;
-                                                _createInterstitialAd();
-                                                Navigator.pop(context);
-                                                setState(() {});
-                                              });
-
-                                      interstitialAd!.show();
-                                    } else {
-                                      downloadSingleFrame(index, imageNames);
-                                    }
-
-                                    //Navigator.pop(context);
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                        color: Colors.blue,
-                                        borderRadius: BorderRadius.circular(6)),
-                                    width: MediaQuery.of(context).size.width * .39,
-                                    height:
-                                    MediaQuery.of(context).size.height * .21,
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: <Widget>[
-                                        Container(
-                                          width: MediaQuery.of(context).size.width *
-                                              .85,
-                                          child: Icon(
-                                            isInterstitialLoaded == true
-                                                ? FontAwesomeIcons.award
-                                                : Icons.download,
-                                            color: Colors.white,
-                                            size: 110,
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
-                                        Flexible(
-                                          child: isInterstitialLoaded == true
-                                              ? const Text(
-                                            "Watch Ad",
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                                fontSize: 18),
-                                          )
-                                              : const Text(
-                                            "Download Frame",
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                                fontSize: 18),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }));
-            });
-
-
-
-
-      }
-
-
-    }
-
-    else{
-
-
-
-      showModalBottomSheet(
+      showDialog(
           context: context,
-          builder: (context) {
-            return StatefulBuilder(builder: ((context, setState) {
-              return Container(
-                height: 310,
-                child: Container(
-                  padding: EdgeInsets.only(top: 20),
-                  width: MediaQuery.of(context).size.width * 0.90,
-                  child: Column(
-                    children: [
-                      const Text(
-                        "Choose Your Option",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 24),
+          builder: (BuildContext context) {
+            return Dialog(
+              child: Container(
+                height: 200,
+                child: Column(
+                  children: [
+                    AppBar(
+                      title: Text("Download"),
+                      backgroundColor: Colors.lightBlue,
+                      automaticallyImplyLeading: false,
+                    ),
+                    Container(
+                      height: 15,
+                      color: Colors.lightBlue.withOpacity(0.6),
+                    ),
+                    Container(
+                      height: 15,
+                      color: Colors.lightBlue.withOpacity(0.4),
+                    ),
+                    SizedBox(height: 15),
+                    Center(
+                      child: Text(
+                        "Would you like to unlock frame ? ",
+                        style: TextStyle(fontSize: 18),
                       ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          InkWell(
-                            onTap: () {
+                    ),
+                    SizedBox(height: 15),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                            onPressed: () {
                               Navigator.pop(context);
                             },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.blue,
-                                  borderRadius: BorderRadius.circular(6)),
-                              width: MediaQuery.of(context).size.width * .39,
-                              height:
-                              MediaQuery.of(context).size.height * .21,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  Container(
-                                    width: MediaQuery.of(context).size.width *
-                                        .85,
-                                    child: const Icon(
-                                      Icons.close,
-                                      color: Colors.white,
-                                      size: 110,
-                                    ),
-                                  ),
-                                  const Text(
-                                    "May be Later",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        fontSize: 18),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          InkWell(
-                            onTap: () async {
-                              //Navigator.pop(context);
-                              print("DOWNLOAD");
-                              print("INDEX VALUE :: $index");
+                            child: Text("No")),
+                        ElevatedButton(
+                          onPressed: () async {
+                            Navigator.pop(context);
+
+
+
+                            if (isInterstitialLoaded == true) {
+                              if(await _showRewardedAd()){
+                                downloadSingleFrame(index, imageNames);
+                              }
+
+
+                            } else {
                               downloadSingleFrame(index, imageNames);
-                              Navigator.pop(context);
-                              // Navigator.pop(context);
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.blue,
-                                  borderRadius: BorderRadius.circular(6)),
-                              width: MediaQuery.of(context).size.width * .39,
-                              height:
-                              MediaQuery.of(context).size.height * .21,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  Container(
-                                    width: MediaQuery.of(context).size.width *
-                                        .85,
-                                    child: const Icon(
-                                      Icons.download,
-                                      color: Colors.white,
-                                      size: 110,
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height: 10,
-                                  ),
-                                  const Flexible(
-                                    child: Text(
-                                      "Download Frame",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                          fontSize: 18),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                            }
+
+                          },
+                          child:
+                          isInterstitialLoaded == true
+                              ?  Text(
+                            "Watch Ad",)
+                              : const Text(
+                            "Download Frame",),
+
+                          // Text("Watch Ad")
+
+                        ),
+                      ],
+                    )
+                  ],
                 ),
-              );
-            }));
+              ),
+            );
           });
-    }
+    } else {
+
+
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return Dialog(
+              child: Container(
+                height: 200,
+                child: Column(
+                  children: [
+                    AppBar(
+                      title: Text("Download"),
+                      backgroundColor: Colors.lightBlue,
+                      automaticallyImplyLeading: false,
+                    ),
+                    Container(
+                      height: 15,
+                      color: Colors.lightBlue.withOpacity(0.6),
+                    ),
+                    Container(
+                      height: 15,
+                      color: Colors.lightBlue.withOpacity(0.4),
+                    ),
+                    SizedBox(height: 15),
+                    Center(
+                      child: Text(
+                        "Would you like to download frame ? ",
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    SizedBox(height: 15),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: Text("No")),
+                        ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+
+                              downloadSingleFrame(index, imageNames);
+
+                            },
+                            child: Text("Download")),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            );
+          });
 
     }
+  }
 
   void downloadSingleFrame(int index, dynamic imageNames) async {
     String namePrefix = widget.bannerModel.cloudReferenceName+"%2F" + widget.bannerModel.frameLocationName;
