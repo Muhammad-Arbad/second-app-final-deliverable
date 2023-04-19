@@ -3,13 +3,10 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io' as io;
 import 'dart:io';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -17,7 +14,6 @@ import 'package:photo_frame_second/ad_mobs_service/ad_mob_service.dart';
 import 'package:photo_frame_second/models/banner_model.dart';
 import 'package:photo_frame_second/models/image_detail_model.dart';
 import 'package:photo_frame_second/views/single_frame.dart';
-import 'package:photo_frame_second/widgets/custom_modal_sheet.dart';
 
 class ItemsGridView extends StatefulWidget {
   BannerModel bannerModel;
@@ -27,8 +23,9 @@ class ItemsGridView extends StatefulWidget {
 }
 
 class _ItemsGridViewState extends State<ItemsGridView> {
-  // RewardedAd? rewardedAd;
+
   RewardedAd? rewardedAd;
+  InterstitialAd? _interstitialAd;
   int _numRewardedLoadAttempts = 0;
   int maxFailedLoadAttempts = 3;
 
@@ -53,6 +50,7 @@ class _ItemsGridViewState extends State<ItemsGridView> {
     // loadAds();
     _createInterstitialAd();
 
+    loadAd();
     listOfFramesFromClod = FirebaseStorage.instance
         .ref(
             '${widget.bannerModel.cloudReferenceName}/${widget.bannerModel.frameLocationName}')
@@ -61,6 +59,48 @@ class _ItemsGridViewState extends State<ItemsGridView> {
     loadFramesFromAssets();
   }
 
+  void loadAd() {
+    InterstitialAd.load(
+        adUnitId: AdMobService.interstitialAdUnitId,
+        request: const AdRequest(),
+        adLoadCallback: InterstitialAdLoadCallback(
+          // Called when an ad is successfully received.
+          onAdLoaded: (ad) {
+            isInterstitialLoaded = true;
+            _numRewardedLoadAttempts = 0;
+            ad.fullScreenContentCallback = FullScreenContentCallback(
+              // Called when the ad showed the full screen content.
+                onAdShowedFullScreenContent: (ad) {},
+                // Called when an impression occurs on the ad.
+                onAdImpression: (ad) {},
+                // Called when the ad failed to show full screen content.
+                onAdFailedToShowFullScreenContent: (ad, err) {
+                  // Dispose the ad here to free resources.
+                  ad.dispose();
+                },
+                // Called when the ad dismissed full screen content.
+                onAdDismissedFullScreenContent: (ad) {
+                  // Dispose the ad here to free resources.
+                  ad.dispose();
+                  loadAd();
+                },
+                // Called when a click is recorded for an ad.
+                onAdClicked: (ad) {});
+
+            debugPrint('$ad loaded.');
+            // Keep a reference to the ad so you can show it later.
+            _interstitialAd = ad;
+          },
+          // Called when an ad request failed.
+          onAdFailedToLoad: (LoadAdError error) {
+            debugPrint('InterstitialAd failed to load: $error');
+            _numRewardedLoadAttempts += 1;
+            if (_numRewardedLoadAttempts < maxFailedLoadAttempts) {
+              _createInterstitialAd();
+            }
+          },
+        ));
+  }
 
 
   // void _createInterstitialAd() {
@@ -494,9 +534,13 @@ class _ItemsGridViewState extends State<ItemsGridView> {
 
                               if (isInterstitialLoaded == true) {
 
-                                if(await _showRewardedAd()){
+                                _interstitialAd!.show().then((value){
                                   downloadSingleFrame(index, imageNames);
-                                }
+                                });
+
+                                // if(await _showRewardedAd()){
+                                //   downloadSingleFrame(index, imageNames);
+                                // }
 
                                 // interstitialAd!.fullScreenContentCallback =
                                 //     FullScreenContentCallback(

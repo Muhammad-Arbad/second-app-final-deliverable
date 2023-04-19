@@ -18,9 +18,13 @@ class AdMobService {
   static String get interstitialAdUnitId {
     if (Platform.isAndroid) {
       if (kDebugMode) {
-        return 'ca-app-pub-3398262524144530/7302408083';
+        // return 'ca-app-pub-3940256099942544/8691691433';
+        return 'ca-app-pub-2704682814304081/2235292196';//Original id from client in first app
+        // return 'ca-app-pub-3940256099942544/1033173712';//Original Test id
+        // return 'ca-app-pub-3398262524144530/7302408083';
       } else {
-        return 'ca-app-pub-3398262524144530/7302408083';
+        return 'ca-app-pub-2704682814304081/2235292196';//Original id from client in first app
+        // return 'ca-app-pub-3398262524144530/7302408083';
       }
     } else if (Platform.isIOS) {
       return '<YOUR_IOS_INTERSTITIAL_AD_UNIT_ID>';

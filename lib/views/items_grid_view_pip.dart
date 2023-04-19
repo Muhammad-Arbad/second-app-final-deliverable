@@ -9,7 +9,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -17,7 +16,6 @@ import 'package:photo_frame_second/ad_mobs_service/ad_mob_service.dart';
 import 'package:photo_frame_second/models/banner_model.dart';
 import 'package:photo_frame_second/models/image_detail_model.dart';
 import 'package:photo_frame_second/views/pip_photo_page.dart';
-import 'package:photo_frame_second/views/single_frame.dart';
 
 class PipItemsGridView extends StatefulWidget {
   BannerModel bannerModel;
