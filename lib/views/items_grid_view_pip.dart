@@ -48,7 +48,7 @@ class _PipItemsGridViewState extends State<PipItemsGridView> {
     super.initState();
     _createInterstitialAd();
 
-    // _createRewardedAd();
+    _createRewardedAd();
     listOfFramesFromClod = FirebaseStorage.instance
         // .ref('${widget.bannerModel.cloudReferenceName}/${widget.bannerModel.frameLocationName}')
         .ref('${widget.bannerModel.cloudReferenceName}/preview')

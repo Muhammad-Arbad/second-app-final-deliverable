@@ -15,10 +15,10 @@ import 'package:photo_frame_second/models/image_detail_model.dart';
 import 'package:photo_frame_second/views/single_bg_change.dart';
 import 'package:photo_frame_second/views/single_frame.dart';
 
-
 class BgChangeItemsGridView extends StatefulWidget {
   BannerModel bannerModel;
-  BgChangeItemsGridView({Key? key, required this.bannerModel}) : super(key: key);
+  BgChangeItemsGridView({Key? key, required this.bannerModel})
+      : super(key: key);
 
   @override
   State<BgChangeItemsGridView> createState() => _BgChangeItemsGridViewState();
@@ -38,24 +38,22 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
   InterstitialAd? interstitialAd;
   RewardedAd? rewardedAd;
 
-
-
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     _createInterstitialAd();
     listOfFramesFromClod = FirebaseStorage.instance
-        .ref('${widget.bannerModel.cloudReferenceName}/${widget.bannerModel.frameLocationName}')
+        .ref(
+            '${widget.bannerModel.cloudReferenceName}/${widget.bannerModel.frameLocationName}')
         .list();
     loadFramesFromAssets();
   }
 
-
   void _createInterstitialAd() {
     log("INSIDE CREATE INTESTIAL AD");
     RewardedAd.load(
-      // adUnitId: AdMobService.rewardedAdUnitId,
+        // adUnitId: AdMobService.rewardedAdUnitId,
         adUnitId: AdMobService.interstitialAdUnitId,
         request: AdRequest(),
         rewardedAdLoadCallback: RewardedAdLoadCallback(
@@ -107,36 +105,29 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
   }
 
   Future<bool> _showRewardedAd() async {
-
     if (rewardedAd == null) {
       return false;
     }
     rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-        onAdShowedFullScreenContent: (RewardedAd ad) {
-        },
+        onAdShowedFullScreenContent: (RewardedAd ad) {},
         onAdDismissedFullScreenContent: (RewardedAd ad) {
           ad.dispose();
           _createInterstitialAd();
         },
         onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
-
           ad.dispose();
-
         },
-        onAdImpression: (RewardedAd ad) => {
-
-        });
-    rewardedAd!.show(onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-    });
+        onAdImpression: (RewardedAd ad) => {});
+    rewardedAd!
+        .show(onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {});
 
     return true;
   }
 
   void _createRewardedAd() {
     RewardedAd.load(
-      // adUnitId: AdMobService.rewardedAdUnitId,
+        // adUnitId: AdMobService.rewardedAdUnitId,
         adUnitId: AdMobService.interstitialAdUnitId,
-
         request: AdRequest(),
         rewardedAdLoadCallback: RewardedAdLoadCallback(
           onAdLoaded: (RewardedAd ad) {
@@ -156,13 +147,14 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
   }
 
   void loadFramesFromAssets() async {
-    print('${widget.bannerModel.assetsCompletePath}/${widget.bannerModel.frameLocationName}/');
+    print(
+        '${widget.bannerModel.assetsCompletePath}/${widget.bannerModel.frameLocationName}/');
     final manifestContent = await rootBundle.loadString('AssetManifest.json');
     final Map<String, dynamic> manifestMap = json.decode(manifestContent);
     log(json.decode(manifestContent).toString());
     final imagePaths = manifestMap.keys
         .where((String key) => key.contains(
-        '${widget.bannerModel.assetsCompletePath}/${widget.bannerModel.frameLocationName}/'))
+            '${widget.bannerModel.assetsCompletePath}/${widget.bannerModel.frameLocationName}/'))
         .toList();
     for (int i = 0; i < imagePaths.length; i++) {
       framesDetails.add(ImgDetails(
@@ -176,7 +168,9 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
   }
 
   void loadFramesFromLocal() async {
-    String namePrefix = widget.bannerModel.cloudReferenceName +"%2F"+ widget.bannerModel.frameLocationName;
+    String namePrefix = widget.bannerModel.cloudReferenceName +
+        "%2F" +
+        widget.bannerModel.frameLocationName;
     final String dir = (await getApplicationDocumentsDirectory()).path;
     io.Directory("$dir").listSync().forEach((element) {
       if (element.path.contains(namePrefix)) {
@@ -186,7 +180,8 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
             path: element.path,
             category: 'local',
             frameName: element.path.split(Platform.pathSeparator).last));
-      };
+      }
+      ;
     });
 
     setState(() {});
@@ -195,13 +190,14 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
   }
 
   void loadFramesFromCloud() async {
-    print("Cloud reference name = " +widget.bannerModel.cloudReferenceName);
-    print("Frame location name = " +widget.bannerModel.frameLocationName);
+    print("Cloud reference name = " + widget.bannerModel.cloudReferenceName);
+    print("Frame location name = " + widget.bannerModel.frameLocationName);
     localFramesCount = framesDetails.length;
 
     final _firestorage = FirebaseStorage.instance;
     final refs = await _firestorage
-        .ref('${widget.bannerModel.cloudReferenceName}/${widget.bannerModel.frameLocationName}')
+        .ref(
+            '${widget.bannerModel.cloudReferenceName}/${widget.bannerModel.frameLocationName}')
         .list();
 
     for (Reference ref in refs.items) {
@@ -228,150 +224,152 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
   @override
   Widget build(BuildContext context) {
     return
-      // OurScaffold(
-      // appBarTitle: widget.bannerModel.bannerName,
-      // scaffoldBody:
-      GridView.count(
-        controller: scrollController,
-        scrollDirection: Axis.vertical,
-        crossAxisCount: 2,
-        mainAxisSpacing: 10,
-        childAspectRatio: 1,
-        children: List.generate(
-          framesDetails.length,
-              (index) => singleCategory(context, framesDetails[index], index),
-        ),
-        // ),
-      );
+        // OurScaffold(
+        // appBarTitle: widget.bannerModel.bannerName,
+        // scaffoldBody:
+        GridView.count(
+      controller: scrollController,
+      scrollDirection: Axis.vertical,
+      crossAxisCount: 2,
+      mainAxisSpacing: 10,
+      childAspectRatio: 9 / 16,
+      children: List.generate(
+        framesDetails.length,
+        (index) => singleCategory(context, framesDetails[index], index),
+      ),
+      // ),
+    );
   }
 
   singleCategory(BuildContext context, ImgDetails frameDetail, int index) {
-
-    if(isDownloading[index] == null){
+    if (isDownloading[index] == null) {
       isDownloading[index] = false;
     }
 
     // print("in build method = "+isDownloading[index].toString());
-    return isDownloading[index]!? Center(child: CircularProgressIndicator(color: Colors.orange)):Container(
-      padding: EdgeInsets.all(5),
-      child: frameDetail.category != 'cloud'
-          ? InkWell(
-        borderRadius: BorderRadius.only(
-          bottomLeft:
-          index % 2 == 1 ? Radius.circular(6) : Radius.circular(6),
-          bottomRight:
-          index % 2 == 0 ? Radius.circular(6) : Radius.circular(6),
-          topLeft: Radius.circular(6),
-          topRight: Radius.circular(6),
-        ),
-        highlightColor: Colors.orangeAccent.withOpacity(0.3),
-        splashColor: Colors.orangeAccent.withOpacity(0.3),
-        onTap: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => SingleBgChange(
-                    bannerModel: widget.bannerModel,
-                    imageDetal: frameDetail,
-                    framesDetails: framesDetails,
-                    frameCategoryName:
-                    widget.bannerModel.frameLocationName,
-                  ))).then((value) => {setState((){})});
-        },
-        child: isDownloading[index]!
-            ? CircularProgressIndicator(color: Colors.orange)
-            : Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.only(
-              bottomLeft: index % 2 == 1
-                  ? Radius.circular(6)
-                  : Radius.circular(6),
-              bottomRight: index % 2 == 0
-                  ? Radius.circular(6)
-                  : Radius.circular(6),
-              topLeft: Radius.circular(6),
-              topRight: Radius.circular(6),
-            ),
-            image: frameDetail.category == 'assets'
-                ? DecorationImage(
-              image: AssetImage(frameDetail.path),
-              fit: BoxFit.cover,
-            )
-                : DecorationImage(
-              image: FileImage(File(frameDetail.path)),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-      )
-          : Stack(children: [
-        InkWell(
-          borderRadius: BorderRadius.only(
-            bottomLeft:
-            index % 2 == 1 ? Radius.circular(6) : Radius.circular(6),
-            bottomRight:
-            index % 2 == 0 ? Radius.circular(6) : Radius.circular(6),
-            topLeft: Radius.circular(6),
-            topRight: Radius.circular(6),
-          ),
-          highlightColor: Colors.orangeAccent.withOpacity(0.3),
-          splashColor: Colors.orangeAccent.withOpacity(0.3),
-          onTap: () {
-            downloadFrame(frameDetail.frameName, index);
-          },
-          child:
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.only(
-                bottomLeft: index % 2 == 1
-                    ? Radius.circular(6)
-                    : Radius.circular(6),
-                bottomRight: index % 2 == 0
-                    ? Radius.circular(6)
-                    : Radius.circular(6),
-                topLeft: Radius.circular(6),
-                topRight: Radius.circular(6),
-              ),
-              image: DecorationImage(
-                image:NetworkImage(frameDetail.path),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 10,
-          right: index % 2 == 1 ? null : 10,
-          left: index % 2 == 1 ? 10 : null,
-          child: IgnorePointer(
-            child: Container(
-              padding: EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: index % 2 == 1
-                        ? Radius.circular(6)
-                        : Radius.circular(6),
-                    bottomRight: index % 2 == 0
-                        ? Radius.circular(6)
-                        : Radius.circular(6),
-                    topLeft: Radius.circular(6),
-                    topRight: Radius.circular(6),
-                  )),
-              child: Icon(
-                index % 2 == 0 ? Icons.download : Icons.lock,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
-      ]),
-    );
+    return isDownloading[index]!
+        ? Center(child: CircularProgressIndicator(color: Colors.orange))
+        : Container(
+            padding: EdgeInsets.all(5),
+            child: frameDetail.category != 'cloud'
+                ? InkWell(
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: index % 2 == 1
+                          ? Radius.circular(6)
+                          : Radius.circular(6),
+                      bottomRight: index % 2 == 0
+                          ? Radius.circular(6)
+                          : Radius.circular(6),
+                      topLeft: Radius.circular(6),
+                      topRight: Radius.circular(6),
+                    ),
+                    highlightColor: Colors.orangeAccent.withOpacity(0.3),
+                    splashColor: Colors.orangeAccent.withOpacity(0.3),
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => SingleBgChange(
+                                    bannerModel: widget.bannerModel,
+                                    imageDetal: frameDetail,
+                                    framesDetails: framesDetails,
+                                    frameCategoryName:
+                                        widget.bannerModel.frameLocationName,
+                                  ))).then((value) => {setState(() {})});
+                    },
+                    child: isDownloading[index]!
+                        ? CircularProgressIndicator(color: Colors.orange)
+                        : Ink(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.only(
+                                bottomLeft: index % 2 == 1
+                                    ? Radius.circular(6)
+                                    : Radius.circular(6),
+                                bottomRight: index % 2 == 0
+                                    ? Radius.circular(6)
+                                    : Radius.circular(6),
+                                topLeft: Radius.circular(6),
+                                topRight: Radius.circular(6),
+                              ),
+                              image: frameDetail.category == 'assets'
+                                  ? DecorationImage(
+                                      image: AssetImage(frameDetail.path),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : DecorationImage(
+                                      image: FileImage(File(frameDetail.path)),
+                                      fit: BoxFit.cover,
+                                    ),
+                            ),
+                          ),
+                  )
+                : Stack(children: [
+                    InkWell(
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: index % 2 == 1
+                            ? Radius.circular(6)
+                            : Radius.circular(6),
+                        bottomRight: index % 2 == 0
+                            ? Radius.circular(6)
+                            : Radius.circular(6),
+                        topLeft: Radius.circular(6),
+                        topRight: Radius.circular(6),
+                      ),
+                      highlightColor: Colors.orangeAccent.withOpacity(0.3),
+                      splashColor: Colors.orangeAccent.withOpacity(0.3),
+                      onTap: () {
+                        downloadFrame(frameDetail.frameName, index);
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: index % 2 == 1
+                                ? Radius.circular(6)
+                                : Radius.circular(6),
+                            bottomRight: index % 2 == 0
+                                ? Radius.circular(6)
+                                : Radius.circular(6),
+                            topLeft: Radius.circular(6),
+                            topRight: Radius.circular(6),
+                          ),
+                          image: DecorationImage(
+                            image: NetworkImage(frameDetail.path),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 10,
+                      right: index % 2 == 1 ? null : 10,
+                      left: index % 2 == 1 ? 10 : null,
+                      child: IgnorePointer(
+                        child: Container(
+                          padding: EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.only(
+                                bottomLeft: index % 2 == 1
+                                    ? Radius.circular(6)
+                                    : Radius.circular(6),
+                                bottomRight: index % 2 == 0
+                                    ? Radius.circular(6)
+                                    : Radius.circular(6),
+                                topLeft: Radius.circular(6),
+                                topRight: Radius.circular(6),
+                              )),
+                          child: Icon(
+                            index % 2 == 0 ? Icons.download : Icons.lock,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ]),
+          );
   }
 
-
   Future downloadFrame(imageNames, int index) async {
-
     if (index % 2 == 1) {
       print("It is Locked Frame: $index");
       showDialog(
@@ -415,28 +413,23 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
                           onPressed: () async {
                             Navigator.pop(context);
 
-
-
                             if (isInterstitialLoaded == true) {
-                              if(await _showRewardedAd()){
+                              if (await _showRewardedAd()) {
                                 downloadSingleFrame(index, imageNames);
                               }
-
-
                             } else {
                               downloadSingleFrame(index, imageNames);
                             }
-
                           },
-                          child:
-                          isInterstitialLoaded == true
-                              ?  Text(
-                            "Watch Ad",)
+                          child: isInterstitialLoaded == true
+                              ? Text(
+                                  "Watch Ad",
+                                )
                               : const Text(
-                            "Download Frame",),
+                                  "Download Frame",
+                                ),
 
                           // Text("Watch Ad")
-
                         ),
                       ],
                     )
@@ -446,8 +439,6 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
             );
           });
     } else {
-
-
       showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -490,7 +481,6 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
                               Navigator.pop(context);
 
                               downloadSingleFrame(index, imageNames);
-
                             },
                             child: Text("Download")),
                       ],
@@ -500,19 +490,23 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
               ),
             );
           });
-
     }
   }
 
   void downloadSingleFrame(int index, dynamic imageNames) async {
-    String namePrefix = widget.bannerModel.cloudReferenceName+"%2F" + widget.bannerModel.frameLocationName;
-    print("Location prefix name = "+namePrefix);
-    setState(() {isDownloading[index] = true;});
+    String namePrefix = widget.bannerModel.cloudReferenceName +
+        "%2F" +
+        widget.bannerModel.frameLocationName;
+    print("Location prefix name = " + namePrefix);
+    setState(() {
+      isDownloading[index] = true;
+    });
     final dir = await getApplicationDocumentsDirectory();
     final file = File('${dir.path}/$namePrefix%2F${imageNames}');
 
     await FirebaseStorage.instance
-        .ref('${widget.bannerModel.cloudReferenceName}/${widget.bannerModel.frameLocationName}')
+        .ref(
+            '${widget.bannerModel.cloudReferenceName}/${widget.bannerModel.frameLocationName}')
         .child(imageNames)
         .writeToFile(file);
 
@@ -520,10 +514,8 @@ class _BgChangeItemsGridViewState extends State<BgChangeItemsGridView> {
     framesDetails.insert(index,
         ImgDetails(path: file.path, category: "local", frameName: imageNames));
 
-    setState(() {isDownloading[index] = false;});
-
+    setState(() {
+      isDownloading[index] = false;
+    });
   }
-
-
-  }
-
+}

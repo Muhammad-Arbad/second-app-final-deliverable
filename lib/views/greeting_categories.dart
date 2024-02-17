@@ -23,29 +23,26 @@ class _GreetingCategoriesState extends State<GreetingCategories> {
   List<NativeAd?> nativeAdList = [];
   List<bool> isAdLoadedList = [];
 
-
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-   
 
-    for(int i=0;i<GlobalItems().greetingBannerList.length;i++){
+    for (int i = 0; i < GlobalItems().greetingBannerList.length; i++) {
       isAdLoadedList.add(false);
-
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return OurScaffold(
-      appBarTitle: "Greeting Categories",
+      appBarTitle: "Wishes Categories",
       scaffoldBody: Container(
         child: ListView.builder(
           itemCount: GlobalItems().greetingBannerList.length,
           itemBuilder: ((context, index) {
-
-            return singleGreetingCategory(GlobalItems().greetingBannerList[index], context,index);
+            return singleGreetingCategory(
+                GlobalItems().greetingBannerList[index], context, index);
           }),
           controller: scrollController,
           scrollDirection: Axis.vertical,
@@ -54,12 +51,9 @@ class _GreetingCategoriesState extends State<GreetingCategories> {
     );
   }
 
-  Widget singleGreetingCategory(BannerModel bannerModel, BuildContext context,int index) {
-
-
-
+  Widget singleGreetingCategory(
+      BannerModel bannerModel, BuildContext context, int index) {
     NativeAd? nativeAd;
-
 
     nativeAdList.add(NativeAd(
       adUnitId: AdMobService.nativeAdUnitId,
@@ -67,27 +61,27 @@ class _GreetingCategoriesState extends State<GreetingCategories> {
       factoryId: "listTileMedium",
       listener: NativeAdListener(onAdLoaded: (ad) {
         setState(() {
-
           isAdLoadedList[index] = true;
         });
       }, onAdFailedToLoad: (ad, error) {
         // loadNativeAd2();
         nativeAd!.dispose();
       }),
-      request:  AdRequest(),
+      request: AdRequest(),
     ));
-
-
-
 
     nativeAdList[index]!.load();
 
     return Column(
       children: [
         index % 2 == 0
-            ? isAdLoadedList[index]!? AdCreation().showNativeAd(nativeAdList[index]):Container(padding:EdgeInsets.all(8), child: Text("Ad Loading..."),)
+            ? isAdLoadedList[index]!
+                ? AdCreation().showNativeAd(nativeAdList[index])
+                : Container(
+                    padding: EdgeInsets.all(8),
+                    child: Text("Ad Loading..."),
+                  )
             : IgnorePointer(),
-
         Container(
           //height: MediaQuery.of(context).size.width*0.5,
           margin: EdgeInsets.all(10),
@@ -98,11 +92,15 @@ class _GreetingCategoriesState extends State<GreetingCategories> {
             color: Colors.white,
           ),
           child: InkWell(
-            onTap: (){
+            onTap: () {
               // Navigator.pushNamed(context, SingleCategoryFrames.routeName);
               // Navigator.pushNamed(context, SingleCategoryFrames.routeName);
-              Navigator.push(context, MaterialPageRoute(builder: (context)=>SingleCategoryGreetings(
-                bannerModel: bannerModel,)));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => SingleCategoryGreetings(
+                            bannerModel: bannerModel,
+                          )));
 
               print(bannerModel.frameLocationName);
               print(bannerModel.assetsCompletePath);
@@ -124,7 +122,6 @@ class _GreetingCategoriesState extends State<GreetingCategories> {
                     //crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-
                         children: [
                           Expanded(
                             flex: 3,
@@ -136,7 +133,7 @@ class _GreetingCategoriesState extends State<GreetingCategories> {
                                   style: const TextStyle(
                                       color: Colors.red,
                                       fontWeight: FontWeight.bold,
-                                  fontSize: 23),
+                                      fontSize: 23),
                                 ),
                                 // SizedBox(
                                 //   height: 5,

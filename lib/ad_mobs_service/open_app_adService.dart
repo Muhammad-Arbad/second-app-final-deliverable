@@ -48,9 +48,7 @@ class AppOpenAdManager {
             ad.dispose();
             _appOpenAd = null;
             Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => HomePage()));
+                context, MaterialPageRoute(builder: (context) => HomePage()));
           },
           onAdDismissedFullScreenContent: (ad) async {
             print('$ad onAdDismissedFullScreenContent');
@@ -59,9 +57,7 @@ class AppOpenAdManager {
             _appOpenAd = null;
             // await Future.delayed(Duration(milliseconds: 1500));
             Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => HomePage()));
+                context, MaterialPageRoute(builder: (context) => HomePage()));
 
             // loadAd();
           },
@@ -71,8 +67,8 @@ class AppOpenAdManager {
       }, onAdFailedToLoad: (error) async {
         await Future.delayed(Duration(milliseconds: 1000));
 
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (context) => HomePage()));
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (context) => HomePage()));
         print("AppOpeAd Failed to Load : $error");
       }),
     );

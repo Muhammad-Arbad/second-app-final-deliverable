@@ -74,7 +74,6 @@ class _FramesCategoriesState extends State<FramesCategories> {
               physics: NeverScrollableScrollPhysics(),
               controller: scrollController,
               scrollDirection: Axis.vertical,
-
             ),
             // AdCreation().showNativeAd(nativeAd2),
           ],
@@ -109,7 +108,7 @@ class _FramesCategoriesState extends State<FramesCategories> {
     return Column(
       children: [
         index % 2 == 0 && index != 0
-            ? isAdLoadedList[index]!
+            ? isAdLoadedList[index]
                 ? AdCreation().showNativeAd(nativeAdList[index])
                 : Container(
                     padding: EdgeInsets.all(8),

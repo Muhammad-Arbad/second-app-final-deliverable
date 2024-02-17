@@ -5,7 +5,7 @@ import 'package:photo_frame_second/ad_mobs_service/ad_mob_service.dart';
 class AdCreation {
   BannerAd createBannerAd() {
     return BannerAd(
-        size: AdSize.fullBanner,
+        size: AdSize.banner,
         adUnitId: AdMobService.bannerAdUnitId.toString(),
         listener: AdMobService.bannerAdListener,
         request: const AdRequest())
@@ -22,7 +22,7 @@ class AdCreation {
                   color: bannerAd != null ? Colors.black : Colors.transparent),
             ),
             //margin: const EdgeInsets.only(bottom: 12),
-            height: 60,
+            height: 62,
             child: Stack(
               children: [
                 const Center(

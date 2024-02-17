@@ -23,7 +23,6 @@ class ItemsGridView extends StatefulWidget {
 }
 
 class _ItemsGridViewState extends State<ItemsGridView> {
-
   RewardedAd? rewardedAd;
   InterstitialAd? _interstitialAd;
   int _numRewardedLoadAttempts = 0;
@@ -49,6 +48,7 @@ class _ItemsGridViewState extends State<ItemsGridView> {
     super.initState();
     // loadAds();
     _createInterstitialAd();
+    _createRewardedAd();
 
     loadAd();
     listOfFramesFromClod = FirebaseStorage.instance
@@ -57,6 +57,32 @@ class _ItemsGridViewState extends State<ItemsGridView> {
         .list();
 
     loadFramesFromAssets();
+  }
+
+  Future<void> _createRewardedAd() async {
+    print("CREATE REWARDED AD");
+    RewardedAd.loadWithAdManagerAdRequest(
+      adUnitId: AdMobService.rewardedAdUnitId,
+      adManagerRequest: const AdManagerAdRequest(),
+      // adManagerAdRequest: AdManagerAdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (RewardedAd ad) {
+          print('RewardedAd ad loaded');
+          print('$ad loaded.');
+          rewardedAd = ad;
+
+          _numRewardedLoadAttempts = 0;
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          print('RewardedAd failed to load: $error');
+          //  _rewardedAd = null;
+          //_numRewardedLoadAttempts += 1;
+          // if (_numRewardedLoadAttempts < maxFailedLoadAttempts) {
+          //   _createRewardedAd();
+          // }
+        },
+      ),
+    );
   }
 
   void loadAd() {
@@ -69,7 +95,7 @@ class _ItemsGridViewState extends State<ItemsGridView> {
             isInterstitialLoaded = true;
             _numRewardedLoadAttempts = 0;
             ad.fullScreenContentCallback = FullScreenContentCallback(
-              // Called when the ad showed the full screen content.
+                // Called when the ad showed the full screen content.
                 onAdShowedFullScreenContent: (ad) {},
                 // Called when an impression occurs on the ad.
                 onAdImpression: (ad) {},
@@ -102,7 +128,6 @@ class _ItemsGridViewState extends State<ItemsGridView> {
         ));
   }
 
-
   // void _createInterstitialAd() {
   //   log("INSIDE CREATE REWARDED AD");
   //   InterstitialAd.load(
@@ -120,9 +145,8 @@ class _ItemsGridViewState extends State<ItemsGridView> {
 
   void _createInterstitialAd() {
     RewardedAd.load(
-      // adUnitId: AdMobService.rewardedAdUnitId,
+        // adUnitId: AdMobService.rewardedAdUnitId,
         adUnitId: AdMobService.interstitialAdUnitId,
-
         request: AdRequest(),
         rewardedAdLoadCallback: RewardedAdLoadCallback(
           onAdLoaded: (RewardedAd ad) {
@@ -158,7 +182,6 @@ class _ItemsGridViewState extends State<ItemsGridView> {
     );
     interstitialAd!.show();
   }
-
 
   void loadFramesFromAssets() async {
     // print('${widget.bannerModel.assetsCompletePath}/${widget.bannerModel.frameLocationName}/');
@@ -199,7 +222,6 @@ class _ItemsGridViewState extends State<ItemsGridView> {
 
     setState(() {});
 
-
     bool result = await InternetConnectionChecker().hasConnection;
     if (result) {
       loadFramesFromCloud();
@@ -207,8 +229,8 @@ class _ItemsGridViewState extends State<ItemsGridView> {
   }
 
   void loadFramesFromCloud() async {
-    print("Cloud reference name = " +widget.bannerModel.cloudReferenceName);
-    print("Frame location name = " +widget.bannerModel.frameLocationName);
+    print("Cloud reference name = " + widget.bannerModel.cloudReferenceName);
+    print("Frame location name = " + widget.bannerModel.frameLocationName);
     localFramesCount = framesDetails.length;
 
     final _firestorage = FirebaseStorage.instance;
@@ -240,17 +262,12 @@ class _ItemsGridViewState extends State<ItemsGridView> {
   // @override
   @override
   Widget build(BuildContext context) {
-
-    return
-        // OurScaffold(
-        // appBarTitle: widget.bannerModel.bannerName,
-        // scaffoldBody:
-        GridView.count(
+    return GridView.count(
       controller: scrollController,
       scrollDirection: Axis.vertical,
       crossAxisCount: 2,
       mainAxisSpacing: 10,
-      childAspectRatio: 1,
+      childAspectRatio: 9 / 16,
       children: List.generate(
         framesDetails.length,
         (index) => singleCategory(context, framesDetails[index], index),
@@ -354,7 +371,7 @@ class _ItemsGridViewState extends State<ItemsGridView> {
                             topRight: Radius.circular(6),
                           ),
                           image: DecorationImage(
-                            image:NetworkImage(frameDetail.path),
+                            image: NetworkImage(frameDetail.path),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -418,8 +435,6 @@ class _ItemsGridViewState extends State<ItemsGridView> {
           );
   }
 
-
-
   void downloadSingleFrame(int index, dynamic frameName) async {
     print("INDEX VALUE :: $index");
     String namePrefix = widget.bannerModel.cloudReferenceName +
@@ -448,8 +463,7 @@ class _ItemsGridViewState extends State<ItemsGridView> {
     });
   }
 
-
-  Future<bool> _showRewardedAd() async {
+  Future<bool> _showRewardedAd(Function() onUserEarned) async {
     log("INSIDE SHOW REWARDED AD FUNCTION");
     if (rewardedAd == null) {
       // print('Warning: attempt to show rewarded before loaded.');
@@ -457,33 +471,24 @@ class _ItemsGridViewState extends State<ItemsGridView> {
       return false;
     }
     rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-        onAdShowedFullScreenContent: (RewardedAd ad) {
-
-        },
+        onAdShowedFullScreenContent: (RewardedAd ad) {},
         onAdDismissedFullScreenContent: (RewardedAd ad) {
-
           ad.dispose();
           _createInterstitialAd();
-
         },
         onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
-
           ad.dispose();
-
         },
-        onAdImpression: (RewardedAd ad) => {
-
-        });
-
+        onAdImpression: (RewardedAd ad) => {});
 
     rewardedAd!.show(onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-
+      onUserEarned();
+      _createRewardedAd();
     });
 
     log("BEFORE RETURN");
     return true;
   }
-
 
   Future downloadFrame(imageNames, int index) async {
     if (index % 2 == 1) {
@@ -527,70 +532,34 @@ class _ItemsGridViewState extends State<ItemsGridView> {
                             },
                             child: Text("No")),
                         ElevatedButton(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              // _createRewardedAd();
+                          onPressed: () async {
+                            Navigator.pop(context);
+                            // _createRewardedAd();
 
-
-                              if (isInterstitialLoaded == true) {
-
-                                _interstitialAd!.show().then((value){
+                            if (isInterstitialLoaded == true) {
+                              _interstitialAd!.show().then((value) {
+                                downloadSingleFrame(index, imageNames);
+                              });
+                            } else {
+                              if (rewardedAd != null) {
+                                _showRewardedAd(() {
                                   downloadSingleFrame(index, imageNames);
                                 });
-
-                                // if(await _showRewardedAd()){
-                                //   downloadSingleFrame(index, imageNames);
-                                // }
-
-                                // interstitialAd!.fullScreenContentCallback =
-                                //     FullScreenContentCallback(
-                                //         onAdShowedFullScreenContent:
-                                //             (InterstitialAd ad) => print(
-                                //             '%ad onAdShowedFullScreenContent.'),
-                                //         onAdDismissedFullScreenContent:
-                                //             (InterstitialAd ad) async {
-                                //           print('$ad Ad has been Dismissed');
-                                //           print("INDEX VALUE :: $index");
-                                //           downloadSingleFrame(
-                                //               index, imageNames);
-                                //           print(
-                                //               '$ad onAdDismissedFullScreenContent.');
-                                //           _createInterstitialAd();
-                                //           Navigator.pop(context);
-                                //
-                                //           ad.dispose();
-                                //         },
-                                //         onAdFailedToShowFullScreenContent:
-                                //             (InterstitialAd ad,
-                                //             AdError error) {
-                                //           print(
-                                //               '$ad onAdFailedToShowFullScreenContent: $error');
-                                //           ad.dispose();
-                                //         },
-                                //         onAdImpression: (InterstitialAd ad) {
-                                //           isInterstitialLoaded = false;
-                                //           _createInterstitialAd();
-                                //           Navigator.pop(context);
-                                //           setState(() {});
-                                //         });
-                                //
-                                // interstitialAd!.show();
-
-
                               } else {
                                 downloadSingleFrame(index, imageNames);
                               }
+                            }
+                          },
+                          child:
+                              isInterstitialLoaded == true || rewardedAd != null
+                                  ? Text(
+                                      "Watch Ad",
+                                    )
+                                  : const Text(
+                                      "Download Frame",
+                                    ),
 
-                            },
-                            child:
-                            isInterstitialLoaded == true
-                                ?  Text(
-                              "Watch Ad",)
-                                : const Text(
-                              "Download Frame",),
-
-                            // Text("Watch Ad")
-
+                          // Text("Watch Ad")
                         ),
                       ],
                     )
@@ -869,12 +838,7 @@ class _ItemsGridViewState extends State<ItemsGridView> {
       //         }));
       //       });
       // }
-
-
-
     } else {
-
-
       showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -933,7 +897,6 @@ class _ItemsGridViewState extends State<ItemsGridView> {
               ),
             );
           });
-
 
       // downloadSingleFrame(index, imageNames);
 
@@ -1046,6 +1009,4 @@ class _ItemsGridViewState extends State<ItemsGridView> {
       //     });
     }
   }
-
-
 }

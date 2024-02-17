@@ -43,7 +43,6 @@ class _HomePageState extends State<HomePage> {
     nativeAd1!.load();
   }
 
-
   @override
   Widget build(BuildContext context) {
     return OurScaffold(
@@ -85,18 +84,40 @@ class _HomePageState extends State<HomePage> {
                   ),
                   Expanded(
                     child: iconNameBlock(
+                        rightBottom: false,
                         leftBottom: true,
-                        icon: const Icon(
-                          Icons.card_giftcard,
-                          size: 30,
-                        ),
-                        nameOfIcon: "Greetings",
+                        icon: const Icon(Icons.card_giftcard, size: 30),
+                        nameOfIcon: "Wishes",
                         bgColor: Colors.amber.shade200,
                         inkwellOnTap: () {
-                          Navigator.pushNamed(
-                              context, GreetingCategories.routeName);
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => SingleCategoryFrames(
+                                        bannerModel:
+                                            GlobalItems().wishesBannerModel,
+                                      )));
+
+                          //   Navigator.push(
+                          //       context,
+                          //       MaterialPageRoute(
+                          //           builder: (context) => FramesCategories()));
                         }),
                   ),
+                  // Expanded(
+                  //   child: iconNameBlock(
+                  //       leftBottom: true,
+                  //       icon: const Icon(
+                  //         Icons.card_giftcard,
+                  //         size: 30,
+                  //       ),
+                  //       nameOfIcon: "Wishes",
+                  //       bgColor: Colors.amber.shade200,
+                  //       inkwellOnTap: () {
+                  //         Navigator.pushNamed(
+                  //             context, GreetingCategories.routeName);
+                  //       }),
+                  // ),
                 ],
               ),
               Row(
@@ -128,20 +149,15 @@ class _HomePageState extends State<HomePage> {
                               context,
                               MaterialPageRoute(
                                   builder: (context) => MyStuff()));
-
-
                         }),
                   ),
-
                 ],
               ),
               const SizedBox(
                 height: 20,
               ),
-
               const Text("Background Effects",
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-
               GridView.count(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
@@ -154,16 +170,15 @@ class _HomePageState extends State<HomePage> {
                   GlobalItems().homePageBannerList.length,
                   (index) => homePageBanner(
                       context, GlobalItems().homePageBannerList[index], () {
-
                     if (GlobalItems().homePageBannerList[index].bannerName ==
                         "Background Change") {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (context) => SingleCategoryGreetings(
-                                bannerModel:
-                                GlobalItems().homePageBannerList[index],
-                              )));
+                                    bannerModel:
+                                        GlobalItems().homePageBannerList[index],
+                                  )));
                     }
 
                     if (GlobalItems().homePageBannerList[index].bannerName ==
@@ -201,21 +216,15 @@ class _HomePageState extends State<HomePage> {
                   }),
                 ),
               ),
-
               const SizedBox(
                 height: 20,
               ),
-
               AdCreation().showNativeAd(nativeAd),
-
-
               const SizedBox(
                 height: 20,
               ),
-
               const Text("More Frames",
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-
               GridView.count(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
@@ -246,8 +255,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ));
   }
-
-
 
   Container customDrawer() {
     return Container(

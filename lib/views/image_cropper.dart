@@ -138,7 +138,7 @@ class _ImageCropperState extends State<ImageCropper> {
               height: currentBubbleSize,
               decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Theme.of(context).accentColor.withOpacity(0.5)),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
             ),),);
   }
 
@@ -228,7 +228,7 @@ class _ImageCropperState extends State<ImageCropper> {
   void initState() {
     // TODO: implement initState
     currentBubbleSize = touchBubbleSize;
-    SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.bottom]);
     super.initState();
     initFunc();
   }

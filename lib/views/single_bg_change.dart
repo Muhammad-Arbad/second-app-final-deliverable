@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -19,6 +20,7 @@ import 'package:photo_frame_second/models/banner_model.dart';
 import 'package:photo_frame_second/models/image_detail_model.dart';
 import 'package:photo_frame_second/views/image_cropper.dart';
 import 'package:photo_frame_second/views/shape_cropper.dart';
+import 'package:photo_frame_second/views/single_frame.dart';
 import 'package:photo_frame_second/widgets/moveable_widget.dart';
 import 'package:photo_frame_second/widgets/our_scaffold.dart';
 import 'package:text_editor/text_editor.dart';
@@ -146,8 +148,8 @@ class _SingleBgChangeState extends State<SingleBgChange> {
           children: [
             Padding(
                 padding: //EdgeInsets.all(0),
-                EdgeInsets.fromLTRB(
-                    0, 5, 0, MediaQuery.of(context).size.height * 0.08),
+                    EdgeInsets.fromLTRB(
+                        0, 5, 0, MediaQuery.of(context).size.height * 0.08),
                 child: SizedBox(
                   width: double.infinity,
                   height: heightOgImge,
@@ -165,7 +167,8 @@ class _SingleBgChangeState extends State<SingleBgChange> {
                                 image: widget.imageDetal.category == "assets"
                                     ? DecorationImage(
                                         fit: BoxFit.cover,
-                                        image: AssetImage(widget.imageDetal.path))
+                                        image:
+                                            AssetImage(widget.imageDetal.path))
                                     : DecorationImage(
                                         fit: BoxFit.cover,
                                         image: FileImage(
@@ -189,7 +192,8 @@ class _SingleBgChangeState extends State<SingleBgChange> {
                                           (MediaQuery.of(context).size.height -
                                               300)) {
                                         setState(() {
-                                          moveableImagesOnImage = IgnorePointer();
+                                          moveableImagesOnImage =
+                                              IgnorePointer();
                                           selectedImageFromGallery =
                                               IgnorePointer();
                                         });
@@ -219,7 +223,9 @@ class _SingleBgChangeState extends State<SingleBgChange> {
                                   ),
                                 )
                               : IgnorePointer(),
-                          for (int i = 0; i < moveableWidgetsOnImage.length; i++)
+                          for (int i = 0;
+                              i < moveableWidgetsOnImage.length;
+                              i++)
                             Positioned.fill(
                               child: MoveableWidget(
                                 item: moveableWidgetsOnImage[i],
@@ -232,11 +238,13 @@ class _SingleBgChangeState extends State<SingleBgChange> {
                                   // if (offset.dy >
                                   //     (MediaQuery.of(context).size.height -
                                   //         300)) {
-                        if (offset.dy > (constraints.maxHeight+50)) {
+                                  if (offset.dy >
+                                      (constraints.maxHeight + 50)) {
                                     setState(() {
                                       moveableWidgetsOnImage
                                           .remove(moveableWidgetsOnImage[i]);
-                                      moveableWidgetsOnImage.insert(i, Text(""));
+                                      moveableWidgetsOnImage.insert(
+                                          i, Text(""));
                                     });
                                   }
                                 },
@@ -251,7 +259,8 @@ class _SingleBgChangeState extends State<SingleBgChange> {
                                   //     (MediaQuery.of(context).size.height -
                                   //         300)) {
 
-                                  if (offset.dy > (constraints.maxHeight+50)) {
+                                  if (offset.dy >
+                                      (constraints.maxHeight + 50)) {
                                     if (!isDeleteButtonActive) {
                                       setState(() {
                                         isDeleteButtonActive = true;
@@ -515,7 +524,26 @@ class _SingleBgChangeState extends State<SingleBgChange> {
   // Widget? selectedImageFromGallery;
 
   getImageAndFreehandCropping(ImageSource media) async {
-    var status = await Permission.storage.request();
+    PermissionStatus status;
+
+    final deviceInfo = DeviceInfoPlugin();
+
+    final info = await deviceInfo.androidInfo;
+    // print(info.version.release ?? 'Unknown');
+
+    if (int.parse(info.version.release) >= 13) {
+      status = await Permission.photos.request();
+    } else {
+      status = await Permission.storage.request();
+    }
+    if (status.isPermanentlyDenied) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return PermissionDeniedDialog();
+        },
+      );
+    }
 
     if (status.isGranted) {
       setState(() {
@@ -555,10 +583,12 @@ class _SingleBgChangeState extends State<SingleBgChange> {
           });
         }
       } else {
-        Fluttertoast.showToast(
-            msg: "Allow Permission to Proceed",
-            backgroundColor: Colors.red,
-            gravity: ToastGravity.CENTER);
+        if (int.parse(info.version.release) < 13) {
+          Fluttertoast.showToast(
+              msg: "Allow Permission to Proceed",
+              backgroundColor: Colors.red,
+              gravity: ToastGravity.CENTER);
+        }
       }
     }
   }
@@ -603,7 +633,26 @@ class _SingleBgChangeState extends State<SingleBgChange> {
   }
 
   void _capturePng(BuildContext context) async {
-    var status = await Permission.storage.request();
+    PermissionStatus status;
+
+    final deviceInfo = DeviceInfoPlugin();
+
+    final info = await deviceInfo.androidInfo;
+    // print(info.version.release ?? 'Unknown');
+
+    if (int.parse(info.version.release) >= 13) {
+      status = await Permission.photos.request();
+    } else {
+      status = await Permission.storage.request();
+    }
+    if (status.isPermanentlyDenied) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return PermissionDeniedDialog();
+        },
+      );
+    }
 
     if (status.isGranted) {
       final RenderRepaintBoundary boundary = _globalKey.currentContext!
@@ -638,10 +687,12 @@ class _SingleBgChangeState extends State<SingleBgChange> {
         }
       });
     } else {
-      Fluttertoast.showToast(
-          msg: "Allow Permission to Proceed",
-          backgroundColor: Colors.red,
-          gravity: ToastGravity.CENTER);
+      if (int.parse(info.version.release) < 13) {
+        Fluttertoast.showToast(
+            msg: "Allow Permission to Proceed",
+            backgroundColor: Colors.red,
+            gravity: ToastGravity.CENTER);
+      }
     }
   }
 
@@ -749,7 +800,6 @@ class _SingleBgChangeState extends State<SingleBgChange> {
         frameLocationName: frameLocationName,
         frames: frames,
         changeFrame: (frameName) {
-
           widget.imageDetal = frameName;
 
           _calculateImageDimension().then((size) {

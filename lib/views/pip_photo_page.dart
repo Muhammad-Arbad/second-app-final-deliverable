@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -13,9 +14,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:gallery_saver/gallery_saver.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_frame_second/global_items/global_items.dart';
 import 'package:photo_frame_second/models/banner_model.dart';
 import 'package:photo_frame_second/models/image_detail_model.dart';
+import 'package:photo_frame_second/views/single_frame.dart';
 import 'package:photo_frame_second/widgets/moveable_widget.dart';
 import 'package:photo_frame_second/widgets/our_scaffold.dart';
 import 'package:text_editor/text_editor.dart';
@@ -30,10 +33,10 @@ class SinglePipFrame extends StatefulWidget {
 
   SinglePipFrame(
       {Key? key,
-        required this.imageDetal,
-        required this.framesDetails,
-        required this.frameCategoryName,
-        required this.bannerModel})
+      required this.imageDetal,
+      required this.framesDetails,
+      required this.frameCategoryName,
+      required this.bannerModel})
       : super(key: key);
 
   @override
@@ -61,10 +64,9 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
   List<Widget> moveableWidgetsOnImage = [];
   List<Widget> moveableImagesOnImage = [];
 
-  String whiteBackground ="";
+  String whiteBackground = "";
   String framePath = "";
   double blurValue = 5.0;
-
 
   @override
   void initState() {
@@ -74,7 +76,8 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
     log(widget.imageDetal.path);
     log(widget.imageDetal.frameName);
     log(widget.imageDetal.category);
-    whiteBackground = widget.imageDetal.path.replaceAll("preview", "whiteBackground");
+    whiteBackground =
+        widget.imageDetal.path.replaceAll("preview", "whiteBackground");
     framePath = widget.imageDetal.path.replaceAll("preview", "frames");
     loadFonts();
     // loadFrames();
@@ -89,14 +92,17 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
         appBarTitle: "Photo Frame",
         scaffoldBody: Padding(
           padding: //EdgeInsets.all(0),
-          EdgeInsets.fromLTRB(
-              0, 0, 0, MediaQuery.of(context).size.height * 0.08),
+              EdgeInsets.fromLTRB(
+                  0, 0, 0, MediaQuery.of(context).size.height * 0.08),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Column(
                 children: [
-                  Text("Change Blur Effect",style: TextStyle(fontWeight: FontWeight.bold),),
+                  Text(
+                    "Change Blur Effect",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   Slider(
                     activeColor: Colors.deepOrange,
                     inactiveColor: Colors.orangeAccent,
@@ -120,18 +126,16 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-
                       Positioned.fill(
                         child: selectedImage == null
                             ? Container()
                             : MoveableWidget(
-                          onDragUpdate: (offset) {},
-                          onScaleStart: () {},
-                          onScaleEnd: (offset) {},
-                          item: Image.file(File(selectedImage!.path)),
-                        ),
+                                onDragUpdate: (offset) {},
+                                onScaleStart: () {},
+                                onScaleEnd: (offset) {},
+                                item: Image.file(File(selectedImage!.path)),
+                              ),
                       ),
-
 
                       Stack(
                         children: [
@@ -141,18 +145,18 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
                               // Image.asset("assets/categories/pip/arbad.jpg"),
                               selectedImage == null
                                   ? Image.asset(
-                                  fit: BoxFit.cover,
-                                  widget.bannerModel.bannerImagePath)
+                                      fit: BoxFit.cover,
+                                      widget.bannerModel.bannerImagePath)
                                   : Image.file(
-                                  fit: BoxFit.cover,
-                                  File(selectedImage!.path)),
+                                      fit: BoxFit.cover,
+                                      File(selectedImage!.path)),
                               ClipRRect(
                                 // Clip it cleanly.
                                 child: BackdropFilter(
                                   filter: ImageFilter.blur(
                                       // sigmaX: 3, sigmaY: 3
-                                      sigmaX:blurValue, sigmaY: blurValue
-                                  ),
+                                      sigmaX: blurValue,
+                                      sigmaY: blurValue),
                                   child: Container(
                                     // color: Colors.grey.withOpacity(0.1),
                                     alignment: Alignment.center,
@@ -172,20 +176,22 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
                                     blendMode: BlendMode.srcATop,
                                     child: Column(
                                       children: [
-                                        widget.imageDetal.category ==
-                                            "assets"?
-                                        Image.asset(whiteBackground):
-                                        Image.file(File(whiteBackground)),
+                                        widget.imageDetal.category == "assets"
+                                            ? Image.asset(whiteBackground)
+                                            : Image.file(File(whiteBackground)),
                                       ],
                                     ),
                                     childSaveLayer: true,
                                     mask: MoveableWidget(
-                                        onDragUpdate: (offset) {},
-                                        onScaleStart: () {},
-                                        onScaleEnd: (offset) {},
-                                        item: selectedImage == null
-                                            ? IgnorePointer()
-                                            : Image.file(File(selectedImage!.path),),),
+                                      onDragUpdate: (offset) {},
+                                      onScaleStart: () {},
+                                      onScaleEnd: (offset) {},
+                                      item: selectedImage == null
+                                          ? IgnorePointer()
+                                          : Image.file(
+                                              File(selectedImage!.path),
+                                            ),
+                                    ),
                                   ),
                                 ),
                                 IgnorePointer(
@@ -194,20 +200,22 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
                                     height: 300,
                                     // child:
                                     decoration: BoxDecoration(
-                                      image: widget.imageDetal.category ==
-                                          "assets"
-                                          ? DecorationImage(
-                                          fit: BoxFit.cover,
-                                          image: AssetImage(
-                                              // widget.imageDetal.path
-                                                  framePath
-                                          ),)
-                                          : DecorationImage(
-                                          fit: BoxFit.cover,
-                                          image: FileImage(File(
-                                              // widget.imageDetal.path
-                                              framePath
-                                          ),),),
+                                      image:
+                                          widget.imageDetal.category == "assets"
+                                              ? DecorationImage(
+                                                  fit: BoxFit.cover,
+                                                  image: AssetImage(
+                                                      // widget.imageDetal.path
+                                                      framePath),
+                                                )
+                                              : DecorationImage(
+                                                  fit: BoxFit.cover,
+                                                  image: FileImage(
+                                                    File(
+                                                        // widget.imageDetal.path
+                                                        framePath),
+                                                  ),
+                                                ),
                                     ),
                                     // Image.asset("assets/categories/pip/3_fg.png")
                                   ),
@@ -287,8 +295,9 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
                           alignment: Alignment.bottomCenter,
                           child: Icon(
                             Icons.delete,
-                            color:
-                            isDeleteButtonActive ? Colors.red : Colors.black,
+                            color: isDeleteButtonActive
+                                ? Colors.red
+                                : Colors.black,
                             size: isDeleteButtonActive ? 40 : 30,
                           ),
                         )
@@ -305,26 +314,26 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
             children: [
               showStickerGrid
                   ? Container(
-                alignment: Alignment.bottomCenter,
-                child: addStickerToScreen(),
-              )
+                      alignment: Alignment.bottomCenter,
+                      child: addStickerToScreen(),
+                    )
                   : IgnorePointer(),
               showFrameGrid
                   ? Container(
-                alignment: Alignment.bottomCenter,
-                child: selectFramesForScreen(
-                  // widget.frameLocationName,
-                    widget.imageDetal.path,
-                    frames,
-                    widget.framesDetails),
-              )
+                      alignment: Alignment.bottomCenter,
+                      child: selectFramesForScreen(
+                          // widget.frameLocationName,
+                          widget.imageDetal.path,
+                          frames,
+                          widget.framesDetails),
+                    )
                   : IgnorePointer(),
               showTextField
                   ? Container(
-                  alignment: Alignment.bottomCenter,
-                  child: addTextToScreen())
+                      alignment: Alignment.bottomCenter,
+                      child: addTextToScreen())
                   : IgnorePointer(),
-              Container(
+              SizedBox(
                 height: MediaQuery.of(context).size.height * 0.08,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -332,7 +341,7 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white // Background color
-                      ),
+                          ),
                       onPressed: () {
                         setState(() {
                           showStickerGrid = false;
@@ -346,12 +355,12 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
                         children: [
                           Icon(Icons.filter_frames_outlined,
                               color:
-                              showFrameGrid ? Colors.blue : Colors.black),
+                                  showFrameGrid ? Colors.blue : Colors.black),
                           Text(
                             "Frames",
                             style: TextStyle(
                                 color:
-                                showFrameGrid ? Colors.blue : Colors.black),
+                                    showFrameGrid ? Colors.blue : Colors.black),
                           )
                         ],
                       ),
@@ -359,7 +368,7 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white // Background color
-                      ),
+                          ),
                       onPressed: () {
                         setState(() {
                           showStickerGrid = false;
@@ -383,7 +392,7 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white // Background color
-                      ),
+                          ),
                       onPressed: () {
                         //addStickerToScreen();
 
@@ -400,7 +409,7 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
                         children: [
                           Icon(Icons.add_circle_outline,
                               color:
-                              showStickerGrid ? Colors.blue : Colors.black),
+                                  showStickerGrid ? Colors.blue : Colors.black),
                           Text(
                             "Sticker",
                             style: TextStyle(
@@ -414,7 +423,7 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white // Background color
-                      ),
+                          ),
                       onPressed: () {
                         setState(() {
                           showFrameGrid = false;
@@ -431,12 +440,12 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
                         children: [
                           Icon(Icons.text_rotation_angleup_sharp,
                               color:
-                              showTextField ? Colors.blue : Colors.black),
+                                  showTextField ? Colors.blue : Colors.black),
                           Text(
                             "Text",
                             style: TextStyle(
                                 color:
-                                showTextField ? Colors.blue : Colors.black),
+                                    showTextField ? Colors.blue : Colors.black),
                           )
                         ],
                       ),
@@ -444,7 +453,7 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white // Background color
-                      ),
+                          ),
                       onPressed: () {
                         setState(() {
                           showStickerGrid = false;
@@ -476,47 +485,105 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
   }
 
   Future getImage(ImageSource media) async {
-    var img = await picker.pickImage(source: media);
-    // print("Img Path"+img!.path);
+    PermissionStatus status;
 
-    setState(() {
-      selectedImage = img;
-      moveableImagesOnImage.add(Image.file(File(selectedImage!.path)));
-    });
+    final deviceInfo = DeviceInfoPlugin();
+
+    final info = await deviceInfo.androidInfo;
+    // print(info.version.release ?? 'Unknown');
+
+    if (int.parse(info.version.release) >= 13) {
+      status = await Permission.photos.request();
+    } else {
+      status = await Permission.storage.request();
+    }
+    if (status.isPermanentlyDenied) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return PermissionDeniedDialog();
+        },
+      );
+    }
+    if (status.isGranted) {
+      var img = await picker.pickImage(source: media);
+      // print("Img Path"+img!.path);
+
+      setState(() {
+        selectedImage = img;
+        moveableImagesOnImage.add(Image.file(File(selectedImage!.path)));
+      });
+    } else {
+      if (int.parse(info.version.release) < 13) {
+        Fluttertoast.showToast(
+            msg: "Allow Permission to Proceed",
+            backgroundColor: Colors.red,
+            gravity: ToastGravity.CENTER);
+      }
+    }
   }
 
   void _capturePng(BuildContext context) async {
-    final RenderRepaintBoundary boundary =
-    _globalKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-    //final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-    final ui.Image image = await boundary.toImage();
-    final ByteData? byteData =
-    await image.toByteData(format: ui.ImageByteFormat.png);
-    final Uint8List pngBytes = byteData!.buffer.asUint8List();
+    PermissionStatus status;
 
-    //create file
+    final deviceInfo = DeviceInfoPlugin();
+
+    final info = await deviceInfo.androidInfo;
+    // print(info.version.release ?? 'Unknown');
+
+    if (int.parse(info.version.release) >= 13) {
+      status = await Permission.photos.request();
+    } else {
+      status = await Permission.storage.request();
+    }
+    if (status.isPermanentlyDenied) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return PermissionDeniedDialog();
+        },
+      );
+    }
+    if (status.isGranted) {
+      final RenderRepaintBoundary boundary = _globalKey.currentContext!
+          .findRenderObject() as RenderRepaintBoundary;
+      //final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      final ui.Image image = await boundary.toImage();
+      final ByteData? byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      final Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+      //create file
 //PAth/data/user/0/com.example.photo_frame/cache/baby2022-12-28 17:48:14.144455.png
 //     final String dir = (await getApplicationDocumentsDirectory()).path;
-    final String dir = (await getApplicationDocumentsDirectory()).path;
-    final String fullPath =
-        '$dir/' + widget.frameCategoryName + '${DateTime.now()}.jpg';
-    print(dir);
-    File capturedFile = File(fullPath);
-    await capturedFile.writeAsBytes(pngBytes);
-    print("Captured Path" + capturedFile.path);
+      final String dir = (await getApplicationDocumentsDirectory()).path;
+      final String fullPath =
+          '$dir/' + widget.frameCategoryName + '${DateTime.now()}.jpg';
+      print(dir);
+      File capturedFile = File(fullPath);
+      await capturedFile.writeAsBytes(pngBytes);
+      print("Captured Path" + capturedFile.path);
 
-    await GallerySaver.saveImage(capturedFile.path,
-        albumName: widget.frameCategoryName, toDcim: true)
-    //await GallerySaver.saveImage(capturedFile.path)
-        .then((value) {
-      if (value == true) {
+      await GallerySaver.saveImage(capturedFile.path,
+              albumName: widget.frameCategoryName, toDcim: true)
+          //await GallerySaver.saveImage(capturedFile.path)
+          .then((value) {
+        if (value == true) {
+          Fluttertoast.showToast(
+              msg: "Image saved Successfully", backgroundColor: Colors.green);
+        } else {
+          Fluttertoast.showToast(
+              msg: "Failed to save", backgroundColor: Colors.red);
+        }
+      });
+    } else {
+      if (int.parse(info.version.release) < 13) {
         Fluttertoast.showToast(
-            msg: "Image saved Successfully", backgroundColor: Colors.green);
-      } else {
-        Fluttertoast.showToast(
-            msg: "Failed to save", backgroundColor: Colors.red);
+            msg: "Allow Permission to Proceed",
+            backgroundColor: Colors.red,
+            gravity: ToastGravity.CENTER);
       }
-    });
+    }
   }
 
   addStickerToScreen() {
@@ -542,9 +609,9 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.5),
         borderRadius: BorderRadius.only(
-          // topRight: Radius.circular(30),
-          // topLeft: Radius.circular(30),
-        ),
+            // topRight: Radius.circular(30),
+            // topLeft: Radius.circular(30),
+            ),
       ),
       height: MediaQuery.of(context).size.height / 2,
       child: TextEditor(
@@ -568,7 +635,7 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
         decoration: EditorDecoration(
           doneButton: Container(
             decoration:
-            BoxDecoration(color: Colors.black, shape: BoxShape.circle),
+                BoxDecoration(color: Colors.black, shape: BoxShape.circle),
             child: Icon(
               Icons.check,
               color: Colors.green,
@@ -590,7 +657,6 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
 
   selectFramesForScreen(
       String frameLocationName, List<String> frames, framesDetails) {
-
     return Container(
       padding: EdgeInsets.all(10),
       height: MediaQuery.of(context).size.height * 0.18,
@@ -604,7 +670,8 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
         changeFrame: (frameName) {
           setState(() {
             widget.imageDetal = frameName;
-            whiteBackground = widget.imageDetal.path.replaceAll("preview", "whiteBackground");
+            whiteBackground =
+                widget.imageDetal.path.replaceAll("preview", "whiteBackground");
             framePath = widget.imageDetal.path.replaceAll("preview", "frames");
           });
         },
@@ -655,7 +722,6 @@ class _SinglePipFrameState extends State<SinglePipFrame> {
 
       return await false;
     } else
-
       return await true;
   }
 }
@@ -669,11 +735,11 @@ class FramesGrid extends StatefulWidget {
 
   FramesGrid(
       {Key? key,
-        required this.frameLocationName,
-        required this.frames,
-        required this.changeFrame,
-        required this.framesDetails,
-        required this.bannerModel})
+      required this.frameLocationName,
+      required this.frames,
+      required this.changeFrame,
+      required this.framesDetails,
+      required this.bannerModel})
       : super(key: key);
 
   @override
@@ -690,7 +756,7 @@ class _FramesGridState extends State<FramesGrid> {
       crossAxisSpacing: 10,
       children: List.generate(
         widget.framesDetails.length,
-            (index) => singleFrame(context, widget.framesDetails[index], index),
+        (index) => singleFrame(context, widget.framesDetails[index], index),
       ),
     );
   }
@@ -708,59 +774,57 @@ class _FramesGridState extends State<FramesGrid> {
         color: Colors.white,
         child: imageDetail.category == "assets"
             ? Image(
-          fit: BoxFit.cover,
-          image: AssetImage(imageDetail.path),
-        )
-            : imageDetail.category == "local"
-            ? Image(
-          fit: BoxFit.cover,
-          image: FileImage(File(imageDetail.path)),
-        )
-            : Stack(
-          children: [
-            Positioned.fill(
-              child: Image(
                 fit: BoxFit.cover,
-                image: NetworkImage(imageDetail.path),
-              ),
-            ),
-            Positioned(
-              top: 5,
-              right: 5,
-              child: Container(
-                padding: EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius:
-                    BorderRadius.all(Radius.circular(30))),
-                child: Icon(
-                  index % 2 == 0 ? Icons.download : Icons.lock,
-                  color: Colors.orange,
-                ),
-              ),
-            ),
-          ],
-        ),
+                image: AssetImage(imageDetail.path),
+              )
+            : imageDetail.category == "local"
+                ? Image(
+                    fit: BoxFit.cover,
+                    image: FileImage(File(imageDetail.path)),
+                  )
+                : Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Image(
+                          fit: BoxFit.cover,
+                          image: NetworkImage(imageDetail.path),
+                        ),
+                      ),
+                      Positioned(
+                        top: 5,
+                        right: 5,
+                        child: Container(
+                          padding: EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(30))),
+                          child: Icon(
+                            index % 2 == 0 ? Icons.download : Icons.lock,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
       ),
     );
   }
 
   downloadFrame(imageNames, int index) async {
-
-
-    String namePrefixFrames = widget.bannerModel.cloudReferenceName + "%2F" + "frames";
-    String namePrefixPreview = widget.bannerModel.cloudReferenceName + "%2F" + "preview";
-    String namePrefixWhiteBackground = widget.bannerModel.cloudReferenceName + "%2F" + "whiteBackground";
-
-
-
+    String namePrefixFrames =
+        widget.bannerModel.cloudReferenceName + "%2F" + "frames";
+    String namePrefixPreview =
+        widget.bannerModel.cloudReferenceName + "%2F" + "preview";
+    String namePrefixWhiteBackground =
+        widget.bannerModel.cloudReferenceName + "%2F" + "whiteBackground";
 
     final dir = await getApplicationDocumentsDirectory();
 
     final filePreview = File('${dir.path}/$namePrefixPreview%2F${imageNames}');
     final fileFrame = File('${dir.path}/$namePrefixFrames%2F${imageNames}');
-    final fileWhiteBackground = File('${dir.path}/$namePrefixWhiteBackground%2F${imageNames}');
-
+    final fileWhiteBackground =
+        File('${dir.path}/$namePrefixWhiteBackground%2F${imageNames}');
 
     await FirebaseStorage.instance
         .ref('${widget.bannerModel.cloudReferenceName}/preview')
@@ -778,10 +842,10 @@ class _FramesGridState extends State<FramesGrid> {
         .writeToFile(fileWhiteBackground);
 
     widget.framesDetails.removeAt(index);
-    widget.framesDetails.insert(index,
+    widget.framesDetails.insert(
+        index,
         ImgDetails(
             path: filePreview.path, category: "local", frameName: imageNames));
-
 
     return widget.framesDetails[index];
   }
@@ -809,7 +873,7 @@ class _StickersGridState extends State<StickersGrid> {
       crossAxisSpacing: 5,
       children: List.generate(
         widget.StickersList.length,
-            (index) => singleSticker(context, widget.StickersList[index]),
+        (index) => singleSticker(context, widget.StickersList[index]),
       ),
     );
   }

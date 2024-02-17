@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -68,7 +69,7 @@ class _SingleFrameState extends State<SingleFrame> {
   double? heightOgImge;
   double? widthOgImge;
 
-  String whiteBackground ="";
+  String whiteBackground = "";
   Image? assedtImage;
   bool isLoading = false;
   BannerAd? bannerAd;
@@ -80,19 +81,16 @@ class _SingleFrameState extends State<SingleFrame> {
     super.initState();
 
     bannerAd = AdCreation().createBannerAd();
-    whiteBackground = widget.imageDetal.path.replaceAll("frames", "whiteBackground");
+    whiteBackground =
+        widget.imageDetal.path.replaceAll("frames", "whiteBackground");
 
     assedtImage = Image.asset(widget.imageDetal.path);
 
-    log("HEIGHT = "+assedtImage!.height.toString());
-
+    log("HEIGHT = " + assedtImage!.height.toString());
 
     setState(() {
       isLoading = true;
     });
-
-
-
 
     _calculateImageDimension().then((size) {
       heightOgImge = size.height;
@@ -100,23 +98,25 @@ class _SingleFrameState extends State<SingleFrame> {
 
       log(heightOgImge.toString());
 
-      final scaledHeight = heightOgImge! * (MediaQuery.of(context).size.width / widthOgImge!);
+      final scaledHeight =
+          heightOgImge! * (MediaQuery.of(context).size.width / widthOgImge!);
       log(scaledHeight.toString());
       final aspectRatio = MediaQuery.of(context).size.width / scaledHeight;
       print('Image aspect ratio: $aspectRatio');
       print('Image Height: $heightOgImge');
-      print('height of decreased image = : '+ (heightOgImge! * aspectRatio).toString());
+      print('height of decreased image = : ' +
+          (heightOgImge! * aspectRatio).toString());
       // heightOgImge = heightOgImge! * aspectRatio;
 
       // setState(() {
       //
       // });
 
-
       log("Media Query width");
       log(MediaQuery.of(context).size.width.toString());
       log(MediaQuery.of(context).size.height.toString());
-      log((heightOgImge! - (widthOgImge! - MediaQuery.of(context).size.width)).toString());
+      log((heightOgImge! - (widthOgImge! - MediaQuery.of(context).size.width))
+          .toString());
 
       log(size.height.toString());
       log(size.width.toString());
@@ -127,9 +127,6 @@ class _SingleFrameState extends State<SingleFrame> {
       });
     });
 
-
-
-
     loadFonts();
     // loadFrames();
     loadStickers();
@@ -137,10 +134,12 @@ class _SingleFrameState extends State<SingleFrame> {
 
   Future<Size> _calculateImageDimension() {
     Completer<Size> completer = Completer();
-    Image image = widget.imageDetal.category == "assets"? Image.asset(widget.imageDetal.path):Image.file(File(widget.imageDetal.path));
+    Image image = widget.imageDetal.category == "assets"
+        ? Image.asset(widget.imageDetal.path)
+        : Image.file(File(widget.imageDetal.path));
     image.image.resolve(ImageConfiguration()).addListener(
       ImageStreamListener(
-            (ImageInfo image, bool synchronousCall) {
+        (ImageInfo image, bool synchronousCall) {
           var myImage = image.image;
           Size size = Size(myImage.width.toDouble(), myImage.height.toDouble());
           completer.complete(size);
@@ -150,23 +149,23 @@ class _SingleFrameState extends State<SingleFrame> {
     return completer.future;
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: backButtonPress,
       child: OurScaffold(
         appBarTitle: "Photo Frame",
-        scaffoldBody: isLoading ?CircularProgressIndicator():
-        // Column(
-        //
-        //   children: [
+        scaffoldBody: isLoading
+            ? CircularProgressIndicator()
+            :
+            // Column(
+            //
+            //   children: [
             // AdCreation().showBannerAd(bannerAd),
             // Expanded(
             //   child:
             //
-              Stack(
+            Stack(
                 // mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   // AdCreation().showBannerAd(bannerAd),
@@ -174,237 +173,253 @@ class _SingleFrameState extends State<SingleFrame> {
                     padding: EdgeInsets.fromLTRB(
                         0, 5, 0, MediaQuery.of(context).size.height * 0.08),
                     child: SizedBox(
-
                       width: double.infinity,
                       height: heightOgImge,
+                      child: LayoutBuilder(builder:
+                          (BuildContext context, BoxConstraints constraints) {
+                        return RepaintBoundary(
+                          key: _globalKey,
+                          child: Stack(
+                            alignment: Alignment.bottomLeft,
+                            children: [
+                              if (widget.bannerModel.bannerName ==
+                                  "Frame Collage")
+                                for (int i = 0;
+                                    i < moveableImagesOnImage.length;
+                                    i++)
+                                  Positioned.fill(
+                                    child: MoveableWidget(
+                                      item: moveableImagesOnImage[i],
+                                      onScaleEnd: (offset) {
+                                        setState(() {
+                                          showDeleteButton = false;
+                                        });
+                                        // print("From Previous End");
 
-                      child: LayoutBuilder(
-                          builder:
-                          (BuildContext context, BoxConstraints constraints){
-
-                            return RepaintBoundary(
-                              key: _globalKey,
-                              child: Stack(
-                                alignment: Alignment.bottomLeft,
-                                children: [
-                                  if (widget.bannerModel.bannerName == "Frame Collage")
-                                    for (int i = 0; i < moveableImagesOnImage.length; i++)
-                                      Positioned.fill(
-                                        child: MoveableWidget(
-                                          item: moveableImagesOnImage[i],
-                                          onScaleEnd: (offset) {
+                                        // if (offset.dy > (MediaQuery.of(context).size.height - 300)) {
+                                        if (offset.dy >
+                                            (constraints.maxHeight + 50)) {
+                                          setState(() {
+                                            moveableImagesOnImage.remove(
+                                                moveableImagesOnImage[i]);
+                                            moveableImagesOnImage.insert(
+                                                i, Text(""));
+                                          });
+                                        }
+                                      },
+                                      onScaleStart: () {
+                                        setState(() {
+                                          showDeleteButton = true;
+                                        });
+                                        // print("From Previous Start");
+                                      },
+                                      onDragUpdate: (offset) {
+                                        // if (offset.dy > (MediaQuery.of(context).size.height - 300)) {
+                                        if (offset.dy >
+                                            (constraints.maxHeight + 50)) {
+                                          if (!isDeleteButtonActive) {
                                             setState(() {
-                                              showDeleteButton = false;
+                                              isDeleteButtonActive = true;
                                             });
-                                            // print("From Previous End");
-
-                                            // if (offset.dy > (MediaQuery.of(context).size.height - 300)) {
-                                              if (offset.dy > (constraints.maxHeight+50)) {
-                                              setState(() {
-                                                moveableImagesOnImage
-                                                    .remove(moveableImagesOnImage[i]);
-                                                moveableImagesOnImage.insert(i, Text(""));
-                                              });
-                                            }
-                                          },
-                                          onScaleStart: () {
-                                            setState(() {
-                                              showDeleteButton = true;
-                                            });
-                                            // print("From Previous Start");
-                                          },
-                                          onDragUpdate: (offset) {
-                                            // if (offset.dy > (MediaQuery.of(context).size.height - 300)) {
-                                              if (offset.dy > (constraints.maxHeight+50)) {
-                                              if (!isDeleteButtonActive) {
-                                                setState(() {
-                                                  isDeleteButtonActive = true;
-                                                });
-                                              }
-                                            } else {
-                                              setState(() {
-                                                isDeleteButtonActive = false;
-                                              });
-                                            }
-                                          },
-                                        ),
-                                      ),
-
-                                  widget.bannerModel.bannerName != "Frame Collage"
-                                      ? Positioned.fill(
-                                    child: selectedImage == null
-                                        ? Container()
-                                        : MoveableWidget(
-                                      onDragUpdate: (offset) {},
-                                      onScaleStart: () {},
-                                      onScaleEnd: (offset) {},
-                                      item: Image.file(File(selectedImage!.path)),
+                                          }
+                                        } else {
+                                          setState(() {
+                                            isDeleteButtonActive = false;
+                                          });
+                                        }
+                                      },
                                     ),
-                                  )
-                                      : IgnorePointer(),
-
-                                  widget.bannerModel.bannerName == "Pip Photo"
-                                      ? Stack(
-                                    children: [
-                                      Stack(
-                                        fit: StackFit.expand,
-                                        children: [
-                                          // Image.asset("assets/categories/pip/arbad.jpg"),
-                                          selectedImage == null
-                                              ? Image.asset(
-                                              fit: BoxFit.cover,
-                                              widget.bannerModel.bannerImagePath)
-                                              : Image.file(
-                                              fit: BoxFit.cover,
-                                              File(selectedImage!.path)),
-                                          ClipRRect(
-                                            // Clip it cleanly.
-                                            child: BackdropFilter(
-                                              filter: ImageFilter.blur(
-                                                  sigmaX: 3, sigmaY: 3),
-                                              child: Container(
-                                                // color: Colors.grey.withOpacity(0.1),
-                                                alignment: Alignment.center,
-                                                // child: Text('CHOCOLATE'),
-                                              ),
+                                  ),
+                              widget.bannerModel.bannerName != "Frame Collage"
+                                  ? Positioned.fill(
+                                      child: selectedImage == null
+                                          ? Container()
+                                          : MoveableWidget(
+                                              onDragUpdate: (offset) {},
+                                              onScaleStart: () {},
+                                              onScaleEnd: (offset) {},
+                                              item: Image.file(
+                                                  File(selectedImage!.path)),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                      Center(
-                                        child: Stack(
+                                    )
+                                  : IgnorePointer(),
+                              widget.bannerModel.bannerName == "Pip Photo"
+                                  ? Stack(
+                                      children: [
+                                        Stack(
+                                          fit: StackFit.expand,
                                           children: [
-                                            Container(
-                                              width: 300,
-                                              height: 300,
-                                              child: WidgetMask(
-                                                blendMode: BlendMode.srcATop,
-                                                child: Column(
-                                                  children: [
-                                                    //White Backround wala
-                                                    // Image.asset("assets/categories/pip/whiteBackground/3.png"),
-                                                    // Image.asset(widget.bannerModel.assetsCompletePath),
-                                                    Image.asset(whiteBackground),
-                                                  ],
+                                            // Image.asset("assets/categories/pip/arbad.jpg"),
+                                            selectedImage == null
+                                                ? Image.asset(
+                                                    fit: BoxFit.cover,
+                                                    widget.bannerModel
+                                                        .bannerImagePath)
+                                                : Image.file(
+                                                    fit: BoxFit.cover,
+                                                    File(selectedImage!.path)),
+                                            ClipRRect(
+                                              // Clip it cleanly.
+                                              child: BackdropFilter(
+                                                filter: ImageFilter.blur(
+                                                    sigmaX: 3, sigmaY: 3),
+                                                child: Container(
+                                                  // color: Colors.grey.withOpacity(0.1),
+                                                  alignment: Alignment.center,
+                                                  // child: Text('CHOCOLATE'),
                                                 ),
-                                                childSaveLayer: true,
-                                                mask: MoveableWidget(
-                                                    onDragUpdate: (offset) {},
-                                                    onScaleStart: () {},
-                                                    onScaleEnd: (offset) {},
-                                                    // item: Image.network("https://firebasestorage.googleapis.com/v0/b/photo-frame-second-75d35.appspot.com/o/wallpapers%2FwallpaperImages%2Fwall5.jpg?alt=media&token=38088d61-5991-4b92-95ee-93ea08966ca5")),
-                                                    item: selectedImage == null
-                                                        ? IgnorePointer()
-                                                        : Image.file(File(selectedImage!.path))),
-                                              ),
-                                            ),
-                                            IgnorePointer(
-                                              child: Container(
-                                                width: 300,
-                                                height: 300,
-                                                // child:
-                                                decoration: BoxDecoration(
-                                                  image: widget.imageDetal.category ==
-                                                      "assets"
-                                                      ? DecorationImage(
-                                                      fit: BoxFit.cover,
-                                                      image: AssetImage(
-                                                          widget.imageDetal.path))
-                                                      : DecorationImage(
-                                                      fit: BoxFit.cover,
-                                                      image: FileImage(File(
-                                                          widget.imageDetal.path))),
-                                                ),
-                                                // Image.asset("assets/categories/pip/3_fg.png")
                                               ),
                                             ),
                                           ],
                                         ),
-                                      ),
-                                    ],
-                                  )
-                                      : IgnorePointer(
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        image: widget.imageDetal.category == "assets"
-                                            ? DecorationImage(
-                                            fit: BoxFit.fill,
-                                            image:
-                                            AssetImage(widget.imageDetal.path))
-                                            : DecorationImage(
-                                            fit: BoxFit.fill,
-                                            image: FileImage(
-                                                File(widget.imageDetal.path))),
-                                      ),
-                                    ),
-                                  ),
-
-                                  for (int i = 0; i < moveableWidgetsOnImage.length; i++)
-                                    Positioned.fill(
-                                      child: MoveableWidget(
-                                        item: moveableWidgetsOnImage[i],
-                                        onScaleEnd: (offset) {
-                                          setState(() {
-                                            showDeleteButton = false;
-                                          });
-                                          // print("From Previous End");
-
-                                          // if (offset.dy > (MediaQuery.of(context).size.height - 250)) {
-                                            if (offset.dy > (constraints.maxHeight+50)) {
-                                            setState(() {
-                                              moveableWidgetsOnImage
-                                                  .remove(moveableWidgetsOnImage[i]);
-                                              moveableWidgetsOnImage.insert(i, Text(""));
-                                            });
-                                          }
-                                        },
-                                        onScaleStart: () {
-                                          setState(() {
-                                            showDeleteButton = true;
-                                          });
-                                          // print("From Previous Start");
-                                        },
-                                        onDragUpdate: (offset) {
-                                          // if (offset.dy > (MediaQuery.of(context).size.height - 250)) {
-                                            if (offset.dy > (constraints.maxHeight+50)) {
-                                            if (!isDeleteButtonActive) {
-                                              setState(() {
-                                                isDeleteButtonActive = true;
-                                              });
-                                            }
-                                          } else {
-                                            setState(() {
-                                              isDeleteButtonActive = false;
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    ),
-
-                                  if (showDeleteButton)
-                                    Align(
-                                      alignment: Alignment.bottomCenter,
-                                      child: Icon(
-                                        Icons.delete,
-                                        color:
-                                        isDeleteButtonActive ? Colors.red : Colors.black,
-                                        size: isDeleteButtonActive ? 40 : 30,
-                                      ),
+                                        Center(
+                                          child: Stack(
+                                            children: [
+                                              Container(
+                                                width: 300,
+                                                height: 300,
+                                                child: WidgetMask(
+                                                  blendMode: BlendMode.srcATop,
+                                                  child: Column(
+                                                    children: [
+                                                      //White Backround wala
+                                                      // Image.asset("assets/categories/pip/whiteBackground/3.png"),
+                                                      // Image.asset(widget.bannerModel.assetsCompletePath),
+                                                      Image.asset(
+                                                          whiteBackground),
+                                                    ],
+                                                  ),
+                                                  childSaveLayer: true,
+                                                  mask: MoveableWidget(
+                                                      onDragUpdate: (offset) {},
+                                                      onScaleStart: () {},
+                                                      onScaleEnd: (offset) {},
+                                                      // item: Image.network("https://firebasestorage.googleapis.com/v0/b/photo-frame-second-75d35.appspot.com/o/wallpapers%2FwallpaperImages%2Fwall5.jpg?alt=media&token=38088d61-5991-4b92-95ee-93ea08966ca5")),
+                                                      item:
+                                                          selectedImage == null
+                                                              ? IgnorePointer()
+                                                              : Image.file(File(
+                                                                  selectedImage!
+                                                                      .path))),
+                                                ),
+                                              ),
+                                              IgnorePointer(
+                                                child: Container(
+                                                  width: 300,
+                                                  height: 300,
+                                                  // child:
+                                                  decoration: BoxDecoration(
+                                                    image: widget.imageDetal
+                                                                .category ==
+                                                            "assets"
+                                                        ? DecorationImage(
+                                                            fit: BoxFit.cover,
+                                                            image: AssetImage(
+                                                                widget
+                                                                    .imageDetal
+                                                                    .path))
+                                                        : DecorationImage(
+                                                            fit: BoxFit.cover,
+                                                            image: FileImage(
+                                                                File(widget
+                                                                    .imageDetal
+                                                                    .path))),
+                                                  ),
+                                                  // Image.asset("assets/categories/pip/3_fg.png")
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     )
-                                ],
-                              ),
-                            );
-                          }
-                      ),
+                                  : IgnorePointer(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          image: widget.imageDetal.category ==
+                                                  "assets"
+                                              ? DecorationImage(
+                                                  fit: BoxFit.fill,
+                                                  image: AssetImage(
+                                                      widget.imageDetal.path))
+                                              : DecorationImage(
+                                                  fit: BoxFit.fill,
+                                                  image: FileImage(File(
+                                                      widget.imageDetal.path))),
+                                        ),
+                                      ),
+                                    ),
+                              for (int i = 0;
+                                  i < moveableWidgetsOnImage.length;
+                                  i++)
+                                Positioned.fill(
+                                  child: MoveableWidget(
+                                    item: moveableWidgetsOnImage[i],
+                                    onScaleEnd: (offset) {
+                                      setState(() {
+                                        showDeleteButton = false;
+                                      });
+                                      // print("From Previous End");
+
+                                      // if (offset.dy > (MediaQuery.of(context).size.height - 250)) {
+                                      if (offset.dy >
+                                          (constraints.maxHeight + 50)) {
+                                        setState(() {
+                                          moveableWidgetsOnImage.remove(
+                                              moveableWidgetsOnImage[i]);
+                                          moveableWidgetsOnImage.insert(
+                                              i, Text(""));
+                                        });
+                                      }
+                                    },
+                                    onScaleStart: () {
+                                      setState(() {
+                                        showDeleteButton = true;
+                                      });
+                                      // print("From Previous Start");
+                                    },
+                                    onDragUpdate: (offset) {
+                                      // if (offset.dy > (MediaQuery.of(context).size.height - 250)) {
+                                      if (offset.dy >
+                                          (constraints.maxHeight + 50)) {
+                                        if (!isDeleteButtonActive) {
+                                          setState(() {
+                                            isDeleteButtonActive = true;
+                                          });
+                                        }
+                                      } else {
+                                        setState(() {
+                                          isDeleteButtonActive = false;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                              if (showDeleteButton)
+                                Align(
+                                  alignment: Alignment.bottomCenter,
+                                  child: Icon(
+                                    Icons.delete,
+                                    color: isDeleteButtonActive
+                                        ? Colors.red
+                                        : Colors.black,
+                                    size: isDeleteButtonActive ? 40 : 30,
+                                  ),
+                                )
+                            ],
+                          ),
+                        );
+                      }),
                     ),
                   ),
                   // Text(''),
                 ],
               ),
-            // ),
+        // ),
         //   ],
         // ),
         bottomSheet: SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -581,68 +596,106 @@ class _SingleFrameState extends State<SingleFrame> {
   }
 
   Future getImage(ImageSource media) async {
+    PermissionStatus status;
 
-    var status = await Permission.storage.request();
+    final deviceInfo = DeviceInfoPlugin();
 
-    if(status.isGranted){
+    final info = await deviceInfo.androidInfo;
+    // print(info.version.release ?? 'Unknown');
+
+    if (int.parse(info.version.release) >= 13) {
+      status = await Permission.photos.request();
+    } else {
+      status = await Permission.storage.request();
+    }
+    if (status.isPermanentlyDenied) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return PermissionDeniedDialog();
+        },
+      );
+    }
+
+    if (status.isGranted) {
       var img = await picker.pickImage(source: media);
-
 
       setState(() {
         selectedImage = img;
         moveableImagesOnImage.add(Image.file(File(selectedImage!.path)));
       });
-    }else
-      {
-        Fluttertoast.showToast(msg: "Allow Permission to Proceed",backgroundColor: Colors.red,gravity: ToastGravity.CENTER);
+    } else {
+      if (int.parse(info.version.release) < 13) {
+        Fluttertoast.showToast(
+            msg: "Allow Permission to Proceed",
+            backgroundColor: Colors.red,
+            gravity: ToastGravity.CENTER);
       }
-
-
+    }
   }
 
   void _capturePng(BuildContext context) async {
+    PermissionStatus status;
 
-    var status = await Permission.storage.request();
+    final deviceInfo = DeviceInfoPlugin();
 
-    if(status.isGranted){
+    final info = await deviceInfo.androidInfo;
+    // print(info.version.release ?? 'Unknown');
 
-
-    final RenderRepaintBoundary boundary =
-        _globalKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-    //final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-    final ui.Image image = await boundary.toImage();
-    final ByteData? byteData =
-        await image.toByteData(format: ui.ImageByteFormat.png);
-    final Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-    //create file
-//PAth/data/user/0/com.example.photo_frame/cache/baby2022-12-28 17:48:14.144455.png
-//     final String dir = (await getApplicationDocumentsDirectory()).path;
-    final String dir = (await getApplicationDocumentsDirectory()).path;
-    final String fullPath =
-        '$dir/' + widget.frameCategoryName + '${DateTime.now()}.jpg';
-    print(dir);
-    File capturedFile = File(fullPath);
-    await capturedFile.writeAsBytes(pngBytes);
-    print("Captured Path" + capturedFile.path);
-
-    await GallerySaver.saveImage(capturedFile.path,
-            albumName: widget.frameCategoryName, toDcim: true)
-        //await GallerySaver.saveImage(capturedFile.path)
-        .then((value) {
-      if (value == true) {
-        Fluttertoast.showToast(
-            msg: "Image saved Successfully", backgroundColor: Colors.green);
-      } else {
-        Fluttertoast.showToast(
-            msg: "Failed to save", backgroundColor: Colors.red);
-      }
-    });
-  }else{
-      Fluttertoast.showToast(msg: "Allow Permission to Proceed",backgroundColor: Colors.red,gravity: ToastGravity.CENTER);
+    if (int.parse(info.version.release) >= 13) {
+      status = await Permission.photos.request();
+    } else {
+      status = await Permission.storage.request();
+    }
+    if (status.isPermanentlyDenied) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return PermissionDeniedDialog();
+        },
+      );
     }
 
+    if (status.isGranted) {
+      final RenderRepaintBoundary boundary = _globalKey.currentContext!
+          .findRenderObject() as RenderRepaintBoundary;
+      //final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      final ui.Image image = await boundary.toImage();
+      final ByteData? byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      final Uint8List pngBytes = byteData!.buffer.asUint8List();
 
+      //create file
+//PAth/data/user/0/com.example.photo_frame/cache/baby2022-12-28 17:48:14.144455.png
+//     final String dir = (await getApplicationDocumentsDirectory()).path;
+      final String dir = (await getApplicationDocumentsDirectory()).path;
+      final String fullPath =
+          '$dir/' + widget.frameCategoryName + '${DateTime.now()}.jpg';
+      print(dir);
+      File capturedFile = File(fullPath);
+      await capturedFile.writeAsBytes(pngBytes);
+      print("Captured Path" + capturedFile.path);
+
+      await GallerySaver.saveImage(capturedFile.path,
+              albumName: widget.frameCategoryName, toDcim: true)
+          //await GallerySaver.saveImage(capturedFile.path)
+          .then((value) {
+        if (value == true) {
+          Fluttertoast.showToast(
+              msg: "Image saved Successfully", backgroundColor: Colors.green);
+        } else {
+          Fluttertoast.showToast(
+              msg: "Failed to save", backgroundColor: Colors.red);
+        }
+      });
+    } else {
+      if (int.parse(info.version.release) < 13) {
+        Fluttertoast.showToast(
+            msg: "Allow Permission to Proceed",
+            backgroundColor: Colors.red,
+            gravity: ToastGravity.CENTER);
+      }
+    }
   }
 
   addStickerToScreen() {
@@ -693,8 +746,8 @@ class _SingleFrameState extends State<SingleFrame> {
         textStyle: TextStyle(fontSize: 25),
         decoration: EditorDecoration(
           doneButton: Container(
-            decoration:
-                const BoxDecoration(color: Colors.black, shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+                color: Colors.black, shape: BoxShape.circle),
             child: const Icon(
               Icons.check,
               color: Colors.green,
@@ -716,7 +769,6 @@ class _SingleFrameState extends State<SingleFrame> {
 
   selectFramesForScreen(
       String frameLocationName, List<String> frames, framesDetails) {
-
     return Container(
       padding: EdgeInsets.all(10),
       height: MediaQuery.of(context).size.height * 0.18,
@@ -728,9 +780,9 @@ class _SingleFrameState extends State<SingleFrame> {
         frameLocationName: frameLocationName,
         frames: frames,
         changeFrame: (frameName) {
-
           widget.imageDetal = frameName;
-          whiteBackground = widget.imageDetal.path.replaceAll("frames", "whiteBackground");
+          whiteBackground =
+              widget.imageDetal.path.replaceAll("frames", "whiteBackground");
 
           _calculateImageDimension().then((size) {
             log("_calculateImageDimension calling");
@@ -752,14 +804,10 @@ class _SingleFrameState extends State<SingleFrame> {
             setState(() {});
           });
 
-
           setState(() {
             // widget.imageDetal = frameName;
             // whiteBackground = widget.imageDetal.path.replaceAll("frames", "whiteBackground");
           });
-
-
-
         },
       ),
     );
@@ -807,12 +855,11 @@ class _SingleFrameState extends State<SingleFrame> {
       });
 
       return await false;
-    } else{
+    } else {
       Navigator.pop(context);
       return await false;
       // return await true;
     }
-
   }
 }
 
@@ -823,16 +870,13 @@ class FramesGrid extends StatefulWidget {
   void Function(ImgDetails) changeFrame;
   BannerModel bannerModel;
 
-
-
   FramesGrid(
       {Key? key,
       required this.frameLocationName,
       required this.frames,
       required this.changeFrame,
       required this.framesDetails,
-      required this.bannerModel
-      })
+      required this.bannerModel})
       : super(key: key);
 
   @override
@@ -882,7 +926,6 @@ class _FramesGridState extends State<FramesGrid> {
     interstitialAd!.show();
   }
 
-
   @override
   Widget build(BuildContext context) {
     return GridView.count(
@@ -901,35 +944,29 @@ class _FramesGridState extends State<FramesGrid> {
     return GestureDetector(
       onTap: () async {
         if (imageDetail.category == 'cloud') {
-
-
-          if(index % 2 == 1){
-
+          if (index % 2 == 1) {
             if (isInterstitialLoaded == true) {
               interstitialAd!.fullScreenContentCallback =
                   FullScreenContentCallback(
-                      onAdShowedFullScreenContent:
-                          (InterstitialAd ad) => print(
-                          '%ad onAdShowedFullScreenContent.'),
+                      onAdShowedFullScreenContent: (InterstitialAd ad) =>
+                          print('%ad onAdShowedFullScreenContent.'),
                       onAdDismissedFullScreenContent:
                           (InterstitialAd ad) async {
                         print('$ad Ad has been Dismissed');
                         print("INDEX VALUE :: $index");
                         // downloadSingleFrame(
                         //     index, imageNames);
-                        widget.changeFrame(await downloadFrame(imageDetail.frameName, index));
-                        print(
-                            '$ad onAdDismissedFullScreenContent.');
+                        widget.changeFrame(
+                            await downloadFrame(imageDetail.frameName, index));
+                        print('$ad onAdDismissedFullScreenContent.');
                         _createInterstitialAd();
                         // Navigator.pop(context);
 
                         ad.dispose();
                       },
                       onAdFailedToShowFullScreenContent:
-                          (InterstitialAd ad,
-                          AdError error) {
-                        print(
-                            '$ad onAdFailedToShowFullScreenContent: $error');
+                          (InterstitialAd ad, AdError error) {
+                        print('$ad onAdFailedToShowFullScreenContent: $error');
                         ad.dispose();
                       },
                       onAdImpression: (InterstitialAd ad) {
@@ -941,11 +978,13 @@ class _FramesGridState extends State<FramesGrid> {
 
               interstitialAd!.show();
             } else {
-              widget.changeFrame(await downloadFrame(imageDetail.frameName, index));
+              widget.changeFrame(
+                  await downloadFrame(imageDetail.frameName, index));
               // downloadSingleFrame(index, imageNames);
             }
-          }else{
-            widget.changeFrame(await downloadFrame(imageDetail.frameName, index));
+          } else {
+            widget
+                .changeFrame(await downloadFrame(imageDetail.frameName, index));
           }
           // widget.changeFrame(await downloadFrame(imageDetail.frameName, index));
         } else {
@@ -994,9 +1033,8 @@ class _FramesGridState extends State<FramesGrid> {
   }
 
   downloadFrame(imageNames, int index) async {
-
-
-    String namePrefix = widget.bannerModel.cloudReferenceName + "%2F" +
+    String namePrefix = widget.bannerModel.cloudReferenceName +
+        "%2F" +
         widget.bannerModel.frameLocationName;
     // print("Location prefix name = "+namePrefix);
     // setState(() {
@@ -1007,15 +1045,14 @@ class _FramesGridState extends State<FramesGrid> {
     final file = File('${dir.path}/$namePrefix%2F${imageNames}');
 
     await FirebaseStorage.instance
-        .ref('${widget.bannerModel.cloudReferenceName}/${widget.bannerModel
-        .frameLocationName}')
+        .ref(
+            '${widget.bannerModel.cloudReferenceName}/${widget.bannerModel.frameLocationName}')
         .child(imageNames)
         .writeToFile(file);
 
     widget.framesDetails.removeAt(index);
     widget.framesDetails.insert(index,
-        ImgDetails(
-            path: file.path, category: "local", frameName: imageNames));
+        ImgDetails(path: file.path, category: "local", frameName: imageNames));
 
     // setState(() {
     //   isDownloading[index] = false;
@@ -1034,11 +1071,6 @@ class _FramesGridState extends State<FramesGrid> {
     //     ImgDetails(path: file.path, category: "local", frameName: imageNames));
 
     return widget.framesDetails[index];
-
-
-
-
-
   }
 }
 
@@ -1080,6 +1112,39 @@ class _StickersGridState extends State<StickersGrid> {
           image: AssetImage(imageNames),
         ),
       ),
+    );
+  }
+}
+
+class PermissionDeniedDialog extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Permission Denied'),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('You have permanently denied permission to open settings.'),
+          SizedBox(height: 16),
+          Text(
+              'Please go to your device settings and grant the necessary permissions manually.'),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            openAppSettings();
+          },
+          child: Text('Open Settings'),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(); // Close the dialog
+          },
+          child: Text('OK'),
+        ),
+      ],
     );
   }
 }

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:photo_frame_second/ad_mobs_service/open_app_adService.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -21,18 +24,27 @@ class _SplashScreenState extends State<SplashScreen> {
 
     super.initState();
     // bgImage = AssetImage("assets/background/bgg3.jpg");
+
     _appOpenAd = AppOpenAdManager(context).loadAd();
 
     goToHomeScreen();
   }
 
+  void initFirebaseRemoteConfig() async {
+    final remoteConfig = FirebaseRemoteConfig.instance;
+    await remoteConfig.setConfigSettings(RemoteConfigSettings(
+      fetchTimeout: const Duration(minutes: 1),
+      minimumFetchInterval: const Duration(hours: 1),
+    ));
+    await remoteConfig.fetchAndActivate().then((value) {
+      print(
+          "shouldShowOpenAppAd:: ${remoteConfig.getBool("shouldShowOpenAppAd")}");
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return
-
-
-
-      Scaffold(
+    return Scaffold(
       backgroundColor: Colors.grey,
       body: Padding(
           padding: EdgeInsets.all(20),
